@@ -2,8 +2,17 @@
 
 ## Dependencies
 
-On Windows x86_64, we install MSYS2 as the software distribution and package manager. Then, we can use `pacman` to install MinGW-w64 toolchain, which includes the g++ compiler.
+In a new powershell window, install `git`.
+
+```powershell
+winget install --id Git.Git -e --source winget
 ```
+
+On Windows x86_64, we will install MSYS2 as the software distribution and package manager. Then, we use `pacman` to install MinGW-w64 toolchain, which includes the g++ compiler. Save the below script at `C:\dev\setup.ps1`.
+
+```powershell
+# c:/dev/setup.ps1
+
 # Install MSYS2
 winget install --id MSYS2.MSYS2 --exact --accept-package-agreements --accept-source-agreements
 
@@ -22,4 +31,11 @@ $path = [Environment]::GetEnvironmentVariable("Path", "User")
 if (($path -split ";") -notcontains $dir) {
     [Environment]::SetEnvironmentVariable("Path", "$dir;$path", "User")
 }
+```
+
+Again, in a new powershell window, execute the following commands:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+C:\dev\setup.ps1
 ```
