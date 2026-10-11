@@ -63,7 +63,9 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
                 "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
-                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin"
             },
             "condition": {
                 "type": "equals",
@@ -153,7 +155,9 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
                 "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
-                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin"
             },
             "condition": {
                 "type": "equals",
