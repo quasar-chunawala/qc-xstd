@@ -1,7 +1,20 @@
 # Setup
 
-The VSCode extensions C/C++ extension pack, clangd, CMake Tools, CMake Language Support, CodeLLDB, CS 128 Clang-Tidy, Git Blame, Git Graph, Git History, VSCode Remote extension pack,
-Clang-Format must be installed.
+The following VSCode extensions are required: C/C++ extension pack, clangd, CMake Tools, CMake Language Support, CodeLLDB, CS 128 Clang-Tidy, Git Blame, Git Graph, Git History, VSCode Remote extension pack,
+Clang-Format.
+
+## Dependencies
+
+```bash
+# Compiler toolchain, make, and Apple's clang/lldb (replaces base-devel)
+xcode-select --install
+
+LLVM_VERSION=22
+GCC_VERSION=16
+brew install cmake ninja ccache git "llvm@${LLVM_VERSION}" "gcc@${GCC_VERSION}"
+brew install --cask visual-studio-code
+```
+
 
 ## Recommended VS Code Setup
 
