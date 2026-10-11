@@ -1,5 +1,8 @@
 # Setup
 
+The VSCode extensions C/C++ extension pack, clangd, CMake Tools, CMake Language Support, CodeLLDB, CS 128 Clang-Tidy, Git Blame, Git Graph, Git History, VSCode Remote extension pack,
+Clang-Format must be installed.
+
 ## Dependencies
 
 On ArchLinux:
@@ -98,18 +101,3 @@ I recommend creating `.vscode/extensions.json` file under the worktree. The belo
     "cmake.options.statusBarVisibility": "visible"
 }
 ```
-
-## Configure and Build
-
-There are various configuration presets defined in `/CMakePresets.json`. To configure:
-
-```
-cmake --preset <preset-name>
-```
-
-Various build presets are defined in `/CMakePresets.json`. To build:
-
-```
-cmake --build --preset <preset-name>
-```
-
