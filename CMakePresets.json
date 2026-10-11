@@ -56,7 +56,6 @@
         {
             "name": "windows-gcc-x64-release",
             "inherits": "config-base-release",
-            "architecture": "x64",
             "environment": {
                 "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
             },
@@ -147,7 +146,6 @@
         {
             "name": "windows-gcc-x64-debug",
             "inherits": "config-base-debug",
-            "architecture": "x64",
             "environment": {
                 "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
             },
