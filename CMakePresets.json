@@ -5,6 +5,7 @@
             "name": "config-base-debug",
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
@@ -13,12 +14,13 @@
             "name": "config-base-release",
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
-            "name": "linux-gcc-x64-release",
+            "name": "linux-gcc16-x64-release",
             "inherits": "config-base-release",
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "x86_64",
@@ -26,146 +28,27 @@
             }
         },
         {
-            "name": "linux-gcc-arm64-release",
-            "inherits": "config-base-release",
-            "cacheVariables": {
-                "CMAKE_SYSTEM_PROCESSOR": "aarch64",
-                "CMAKE_CXX_COMPILER": "clang++"
-            }
-        },
-        {
-            "name": "linux-gcc11-x64-release",
-            "inherits": "linux-gcc-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++11"
-            }
-        },
-        {
-            "name": "linux-gcc12-x64-release",
-            "inherits": "linux-gcc-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++12"
-            }
-        },
-        {
-            "name": "linux-gcc13-x64-release",
-            "inherits": "linux-gcc-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++13"
-            }
-        },
-        {
-            "name": "linux-gcc14-x64-release",
-            "inherits": "linux-gcc-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++14"
-            }
-        },
-        {
-            "name": "linux-gcc15-x64-release",
-            "inherits": "linux-gcc-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++15"
-            }
-        },
-        {
-            "name": "linux-gcc11-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++11"
-            }
-        },
-        {
-            "name": "linux-gcc12-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++12"
-            }
-        },
-        {
-            "name": "linux-gcc13-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++13"
-            }
-        },
-        {
-            "name": "linux-gcc14-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++14"
-            }
-        },
-        {
-            "name": "linux-gcc15-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++15"
-            }
-        },
-        {
             "name": "linux-gcc16-arm64-release",
-            "inherits": "linux-gcc-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++16"
-            }
-        },
-        {
-            "name": "linux-clang-x64-release",
             "inherits": "config-base-release",
             "cacheVariables": {
-                "CMAKE_SYSTEM_PROCESSOR": "x86_64",
-                "CMAKE_CXX_COMPILER": "clang++"
+                "CMAKE_CXX_COMPILER": "g++16",
+                "CMAKE_SYSTEM_PROCESSOR": "aarch64"
             }
         },
         {
-            "name": "linux-clang16-x64-release",
-            "inherits": "linux-clang-x64-release",
+            "name": "linux-clang22-x64-release",
+            "inherits": "config-base-release",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++16"
+                "CMAKE_CXX_COMPILER": "clang++22",
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
             }
         },
         {
-            "name": "linux-clang17-x64-release",
-            "inherits": "linux-clang-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++17"
-            }
-        },
-        {
-            "name": "linux-clang18-x64-release",
-            "inherits": "linux-clang-x64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++18"
-            }
-        },
-        {
-            "name": "linux-clang-arm64-release",
+            "name": "linux-clang22-arm64-release",
             "inherits": "config-base-release",
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "aarch64",
-                "CMAKE_CXX_COMPILER": "clang++"
-            }
-        },
-        {
-            "name": "linux-clang16-arm64-release",
-            "inherits": "linux-clang-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++16"
-            }
-        },
-        {
-            "name": "linux-clang17-arm64-release",
-            "inherits": "linux-clang-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++17"
-            }
-        },
-        {
-            "name": "linux-clang18-arm64-release",
-            "inherits": "linux-clang-arm64-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++18"
+                "CMAKE_CXX_COMPILER": "clang++22"
             }
         },
         {
@@ -197,6 +80,7 @@
         {
             "name": "linux-gcc-x64-debug",
             "inherits": "config-base-debug",
+            "hidden": true,
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "x86_64",
                 "CMAKE_CXX_COMPILER": "g++"
@@ -205,79 +89,17 @@
         {
             "name": "linux-gcc-arm64-debug",
             "inherits": "config-base-debug",
+            "hidden": true,
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "aarch64",
                 "CMAKE_CXX_COMPILER": "clang++"
             }
         },
         {
-            "name": "linux-gcc11-x64-debug",
+            "name": "linux-gcc16-x64-debug",
             "inherits": "linux-gcc-x64-debug",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++11"
-            }
-        },
-        {
-            "name": "linux-gcc12-x64-debug",
-            "inherits": "linux-gcc-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++12"
-            }
-        },
-        {
-            "name": "linux-gcc13-x64-debug",
-            "inherits": "linux-gcc-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++13"
-            }
-        },
-        {
-            "name": "linux-gcc14-x64-debug",
-            "inherits": "linux-gcc-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++14"
-            }
-        },
-        {
-            "name": "linux-gcc15-x64-debug",
-            "inherits": "linux-gcc-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++15"
-            }
-        },
-        {
-            "name": "linux-gcc11-arm64-debug",
-            "inherits": "linux-gcc-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++11"
-            }
-        },
-        {
-            "name": "linux-gcc12-arm64-debug",
-            "inherits": "linux-gcc-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++12"
-            }
-        },
-        {
-            "name": "linux-gcc13-arm64-debug",
-            "inherits": "linux-gcc-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++13"
-            }
-        },
-        {
-            "name": "linux-gcc14-arm64-debug",
-            "inherits": "linux-gcc-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++14"
-            }
-        },
-        {
-            "name": "linux-gcc15-arm64-debug",
-            "inherits": "linux-gcc-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++15"
+                "CMAKE_CXX_COMPILER": "g++"
             }
         },
         {
@@ -289,6 +111,7 @@
         },
         {
             "name": "linux-clang-x64-debug",
+            "hidden": true,
             "inherits": "config-base-debug",
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "x86_64",
@@ -296,53 +119,26 @@
             }
         },
         {
-            "name": "linux-clang16-x64-debug",
+            "name": "linux-clang22-x64-debug",
             "inherits": "linux-clang-x64-debug",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++16"
-            }
-        },
-        {
-            "name": "linux-clang17-x64-debug",
-            "inherits": "linux-clang-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++17"
-            }
-        },
-        {
-            "name": "linux-clang18-x64-debug",
-            "inherits": "linux-clang-x64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++18"
+                "CMAKE_CXX_COMPILER": "clang++22"
             }
         },
         {
             "name": "linux-clang-arm64-debug",
             "inherits": "config-base-debug",
+            "hidden": true,
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "aarch64",
                 "CMAKE_CXX_COMPILER": "clang++"
             }
         },
         {
-            "name": "linux-clang16-arm64-debug",
+            "name": "linux-clang22-arm64-debug",
             "inherits": "linux-clang-arm64-debug",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++16"
-            }
-        },
-        {
-            "name": "linux-clang17-arm64-debug",
-            "inherits": "linux-clang-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++17"
-            }
-        },
-        {
-            "name": "linux-clang18-arm64-debug",
-            "inherits": "linux-clang-arm64-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++18"
+                "CMAKE_CXX_COMPILER": "clang++22"
             }
         },
         {
@@ -357,6 +153,7 @@
         },
         {
             "name": "windows-clang-x64-debug",
+            "hidden": true,
             "inherits": "config-base-debug",
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "clang++",
@@ -373,88 +170,20 @@
     ],
     "buildPresets": [
         {
-            "name": "linux-gcc-x64-release",
-            "configurePreset": "linux-gcc-x64-release"
-        },
-        {
-            "name": "linux-gcc11-x64-release",
-            "configurePreset": "linux-gcc11-x64-release"
-        },
-        {
-            "name": "linux-gcc12-x64-release",
-            "configurePreset": "linux-gcc12-x64-release"
-        },
-        {
-            "name": "linux-gcc13-x64-release",
-            "configurePreset": "linux-gcc13-x64-release"
-        },
-        {
-            "name": "linux-gcc14-x64-release",
-            "configurePreset": "linux-gcc14-x64-release"
-        },
-        {
-            "name": "linux-gcc15-x64-release",
-            "configurePreset": "linux-gcc15-x64-release"
-        },
-        {
-            "name": "linux-gcc-arm64-release",
-            "configurePreset": "linux-gcc-arm64-release"
-        },
-        {
-            "name": "linux-gcc11-arm64-release",
-            "configurePreset": "linux-gcc11-arm64-release"
-        },
-        {
-            "name": "linux-gcc12-arm64-release",
-            "configurePreset": "linux-gcc12-arm64-release"
-        },
-        {
-            "name": "linux-gcc13-arm64-release",
-            "configurePreset": "linux-gcc13-arm64-release"
-        },
-        {
-            "name": "linux-gcc14-arm64-release",
-            "configurePreset": "linux-gcc14-arm64-release"
-        },
-        {
-            "name": "linux-gcc15-arm64-release",
-            "configurePreset": "linux-gcc15-arm64-release"
+            "name": "linux-gcc16-x64-release",
+            "configurePreset": "linux-gcc16-x64-release"
         },
         {
             "name": "linux-gcc16-arm64-release",
             "configurePreset": "linux-gcc16-arm64-release"
         },
         {
-            "name": "linux-clang-x64-release",
-            "configurePreset": "linux-clang-x64-release"
+            "name": "linux-clang22-x64-release",
+            "configurePreset": "linux-clang22-x64-release"
         },
         {
-            "name": "linux-clang16-x64-release",
-            "configurePreset": "linux-clang16-x64-release"
-        },
-        {
-            "name": "linux-clang17-x64-release",
-            "configurePreset": "linux-clang17-x64-release"
-        },
-        {
-            "name": "linux-clang18-x64-release",
-            "configurePreset": "linux-clang18-x64-release"
-        },
-        {
-            "name": "linux-clang-arm64-release",
-            "configurePreset": "linux-clang-arm64-release"
-        },
-        {
-            "name": "linux-clang16-arm64-release",
-            "configurePreset": "linux-clang16-arm64-release"
-        },
-        {
-            "name": "linux-clang17-arm64-release",
-            "configurePreset": "linux-clang17-arm64-release"
-        },
-        {
-            "name": "linux-clang18-arm64-release",
-            "configurePreset": "linux-clang18-arm64-release"
+            "name": "linux-clang22-arm64-release",
+            "configurePreset": "linux-clang22-arm64-release"
         },
         {
             "name": "windows-msvc-x64-release",
@@ -469,88 +198,20 @@
             "configurePreset": "macos-release"
         },
         {
-            "name": "linux-gcc-x64-debug",
-            "configurePreset": "linux-gcc-x64-debug"
-        },
-        {
-            "name": "linux-gcc11-x64-debug",
-            "configurePreset": "linux-gcc11-x64-debug"
-        },
-        {
-            "name": "linux-gcc12-x64-debug",
-            "configurePreset": "linux-gcc12-x64-debug"
-        },
-        {
-            "name": "linux-gcc13-x64-debug",
-            "configurePreset": "linux-gcc13-x64-debug"
-        },
-        {
-            "name": "linux-gcc14-x64-debug",
-            "configurePreset": "linux-gcc14-x64-debug"
-        },
-        {
-            "name": "linux-gcc15-x64-debug",
-            "configurePreset": "linux-gcc15-x64-debug"
-        },
-        {
-            "name": "linux-gcc-arm64-debug",
-            "configurePreset": "linux-gcc-arm64-debug"
-        },
-        {
-            "name": "linux-gcc11-arm64-debug",
-            "configurePreset": "linux-gcc11-arm64-debug"
-        },
-        {
-            "name": "linux-gcc12-arm64-debug",
-            "configurePreset": "linux-gcc12-arm64-debug"
-        },
-        {
-            "name": "linux-gcc13-arm64-debug",
-            "configurePreset": "linux-gcc13-arm64-debug"
-        },
-        {
-            "name": "linux-gcc14-arm64-debug",
-            "configurePreset": "linux-gcc14-arm64-debug"
-        },
-        {
-            "name": "linux-gcc15-arm64-debug",
-            "configurePreset": "linux-gcc15-arm64-debug"
+            "name": "linux-gcc16-x64-debug",
+            "configurePreset": "linux-gcc16-x64-debug"
         },
         {
             "name": "linux-gcc16-arm64-debug",
             "configurePreset": "linux-gcc16-arm64-debug"
         },
         {
-            "name": "linux-clang-x64-debug",
-            "configurePreset": "linux-clang-x64-debug"
+            "name": "linux-clang22-x64-debug",
+            "configurePreset": "linux-clang22-x64-debug"
         },
         {
-            "name": "linux-clang16-x64-debug",
-            "configurePreset": "linux-clang16-x64-debug"
-        },
-        {
-            "name": "linux-clang17-x64-debug",
-            "configurePreset": "linux-clang17-x64-debug"
-        },
-        {
-            "name": "linux-clang18-x64-debug",
-            "configurePreset": "linux-clang18-x64-debug"
-        },
-        {
-            "name": "linux-clang-arm64-debug",
-            "configurePreset": "linux-clang-arm64-debug"
-        },
-        {
-            "name": "linux-clang16-arm64-debug",
-            "configurePreset": "linux-clang16-arm64-debug"
-        },
-        {
-            "name": "linux-clang17-arm64-debug",
-            "configurePreset": "linux-clang17-arm64-debug"
-        },
-        {
-            "name": "linux-clang18-arm64-debug",
-            "configurePreset": "linux-clang18-arm64-debug"
+            "name": "linux-clang22-arm64-debug",
+            "configurePreset": "linux-clang22-arm64-debug"
         },
         {
             "name": "windows-msvc-x64-debug",

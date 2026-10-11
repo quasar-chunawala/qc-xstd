@@ -14,38 +14,38 @@ GIT_REPOSITORY
 fetchcontent_makeavailable(googletest)
 
 
-message("LIBCPP_TESTS_ROOT : ${LIBCPP_TESTS_ROOT}")
+message("XSTD_TESTS_ROOT : ${XSTD_TESTS_ROOT}")
 
-set(LIBCPP_TESTS_HEADERS
+set(XSTD_TESTS_HEADERS
     ""
 )
 
-set(LIBCPP_TESTS_SOURCES
-    "${LIBCPP_TESTS_ROOT}/forward_list_test/forward_list_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/shared_ptr_test/shared_ptr_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/spsc_queue_test/spsc_queue_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/string_test/string_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/threadsafe_queue_test/threadsafe_queue_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/threadsafe_stack_test/threadsafe_stack_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/unique_ptr_test/unique_ptr_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/variant_test/variant_test.cpp"
-    "${LIBCPP_TESTS_ROOT}/vector_test/vector_test.cpp"
+set(XSTD_TESTS_SOURCES
+    "${XSTD_TESTS_ROOT}/forward_list_test/forward_list_test.cpp"
+    "${XSTD_TESTS_ROOT}/shared_ptr_test/shared_ptr_test.cpp"
+    "${XSTD_TESTS_ROOT}/spsc_queue_test/spsc_queue_test.cpp"
+    "${XSTD_TESTS_ROOT}/string_test/string_test.cpp"
+    "${XSTD_TESTS_ROOT}/threadsafe_queue_test/threadsafe_queue_test.cpp"
+    "${XSTD_TESTS_ROOT}/threadsafe_stack_test/threadsafe_stack_test.cpp"
+    "${XSTD_TESTS_ROOT}/unique_ptr_test/unique_ptr_test.cpp"
+    "${XSTD_TESTS_ROOT}/variant_test/variant_test.cpp"
+    "${XSTD_TESTS_ROOT}/vector_test/vector_test.cpp"
 )
 
-add_executable(libcpp_tests)
+add_executable(xstd_tests)
 
-target_sources(libcpp_tests
+target_sources(xstd_tests
     PRIVATE
-        ${LIBCPP_TESTS_SOURCES}
-        ${LIBCPP_TESTS_HEADERS}
+        ${XSTD_TESTS_SOURCES}
+        ${XSTD_TESTS_HEADERS}
 )
 
-target_link_libraries(libcpp_tests
+target_link_libraries(xstd_tests
     PRIVATE
-        core
+        libxstd
         GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(libcpp_tests)
+gtest_discover_tests(xstd_tests)
 

@@ -4,9 +4,15 @@
 
 On ArchLinux:
 
+```bash
+LLVM_VERSION=22
+GCC_VERSION=16
+sudo pacman -Syu base-devel cmake ninja clang${LLVM_VERSION} llvm${LLVM_VERSION} gdb lldb ccache valgrind git code
 ```
-sudo pacman -Syu base-devel cmake ninja clang llvm clang-tools-extra llvm19 polly gdb lldb ccache valgrind git code
-```
+
+On Ubuntu:
+
+
 
 ## Recommended VS Code Setup
 

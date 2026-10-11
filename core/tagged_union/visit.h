@@ -1,230 +1,118 @@
-#include <array>
-#include <concepts>
-#include <cstddef>
-#include <initializer_list>
+#include "poly_array.h"
+#include "utils.h"
 #include <utility>
-#include <variant>
-
-#include <core/tagged_union/utilities.h>
-
-// https://godbolt.org/z/f4bTvG5cd
-
-#include <array>
-#include <format>
-#include <initializer_list>
-#include <iostream>
-#include <memory>
-#include <numeric>
-#include <print>
-#include <utility>
-#include <variant>
-
-namespace dev::tools {
-	template <std::size_t... Dimensions>
-	constexpr auto build_coeffs_array() {
-		constexpr std::array<std::size_t, sizeof...(Dimensions)>
-		    dimensions{Dimensions...};
-		constexpr std::size_t coeffs_size = sizeof...(Dimensions);
-		std::array<std::size_t, coeffs_size> coeffs = {};
-
-		for (std::size_t i{0}; i < coeffs_size; ++i)
-			coeffs[i] = 1;
-
-		for (std::size_t i{0}; i < coeffs_size - 1; ++i) {
-			// In step i, we need to populate all coeffs[j], j <= i
-			for (std::size_t j{0}; j <= i; ++j) {
-				coeffs[j] *= dimensions[i + 1];
-			}
-		}
-		return coeffs;
-	}
-	/*
-	coeff[0] = v1size * ... * v[n-1] size
-	coeff[1] = v2size * .... *v[n-1] size
-	...
-	coeff[n-2] = v[n-1] size
-	coeff[n-1] = 1
-	*/
-	template <std::size_t... Dimensions>
-	std::size_t constexpr to_index(auto... indices) {
-		constexpr std::array<std::size_t, sizeof...(Dimensions)>
-		    dimensions{Dimensions...};
-		std::size_t coeffs_size = sizeof...(Dimensions);
-		auto coeffs = build_coeffs_array<Dimensions...>();
-		// std::println("{}", coeffs);
-		const std::array<size_t, sizeof...(indices)> indices_arr{
-		    indices...};
-		// std::println("{}", indices_arr);
-		return std::inner_product(
-		    coeffs.begin(), coeffs.end(), indices_arr.begin(), 0);
-	}
-
-	/*
-	Suppose we have the dimensions <3, 5, 2> and the coordinates (1, 3, 1).
-	(1, 3, 1) maps to the linear index 17.
-	*/
-
-	template <typename Func, typename... Ts>
-	constexpr auto for_each(Func &&func, std::tuple<Ts...> tup) {
-		return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
-			return std::make_tuple(
-			    std::forward<Func>(func)(std::get<Indices>(tup))...);
-		}(std::make_index_sequence<sizeof...(Ts)>());
-	}
-
-	template <typename Func, typename T, size_t N>
-	constexpr auto for_each(Func &&func, std::array<T, N> arr) {
-		using result_t = decltype(func(T()));
-		std::array<result_t, N> results{};
-		return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
-			((results[Indices] = func(arr[Indices])), ...);
-			return results;
-		}(std::make_index_sequence<N>());
-	}
-
-	template <size_t N>
-	constexpr auto build_coords_array(std::array<size_t, N> coeffs,
-	                                  size_t &initState) {
-		size_t state = initState;
-		std::array<size_t, N> coords{};
-		for (size_t i{0}; i < N; ++i) {
-			coords[i] = static_cast<size_t>(state / coeffs[i]);
-			state -= coords[i] * coeffs[i];
-		}
-		return coords;
-	}
-
-	template <size_t... Dimensions>
-	decltype(auto) constexpr from_index(std::size_t n) {
-		constexpr std::size_t coords_arr_size = sizeof...(Dimensions);
-		constexpr auto coeffs = build_coeffs_array<Dimensions...>();
-		std::array<size_t, coords_arr_size> coords =
-		    build_coords_array(coeffs, n);
-		return coords;
-	}
-} // namespace dev::tools
+#include <mdspan>
 
 // Simple case of 2 variants
-namespace dev {
+namespace qc{
+    /*
+    namespace example{
 
-	namespace example {
+        struct Dummy{};
+        template<typename T>
+        using Wrapper = std::conditional_t<std::is_void_v<T>,Dummy,T>;
 
-		struct Dummy {};
-		template <typename T>
-		using Wrapper = std::conditional_t<std::is_void_v<T>, Dummy, T>;
 
-		template <typename Visitor, typename Variant0, typename Variant1>
-		decltype(auto) visit(Visitor &&visitor, Variant0 va0,
-		                     Variant1 va1) {
-			constexpr std::array<std::size_t, 2> dimensions = {
-			    std::variant_size_v<Variant0>,
-			    std::variant_size_v<Variant1>};
-			constexpr std::size_t vtable_size =
-			    (std::variant_size_v<Variant0> *
-			     std::variant_size_v<Variant1>);
-			using cases_t = std::string (*)(Visitor, Variant0, Variant1);
-			static constexpr auto vtable{
-			    []<size_t... Indices>(std::index_sequence<Indices...>) {
-				    return std::array<cases_t, 4>{
-				        [](Visitor vis, Variant0 va0, Variant1 va1) {
-					        constexpr auto multi_idx =
-					            dev::tools::from_index<2, 2>(Indices);
-					        return vis(std::get<multi_idx[0]>(va0),
-					                   std::get<multi_idx[1]>(va1));
-				        }...};
-			    }(std::make_index_sequence<vtable_size>())};
+        template<typename Visitor, typename Variant0, typename Variant1>
+        decltype(auto) visit(Visitor&& visitor, Variant0 v0, Variant1 v1){
+            constexpr std::array<std::size_t, 2> dimensions = { std::variant_size_v<Variant0>, std::variant_size_v<Variant1> };
+            constexpr std::size_t vtable_size = (std::variant_size_v<Variant0> * std::variant_size_v<Variant1>);
+            using cases_t = std::string(*)(Visitor, Variant0, Variant1);
+            static constexpr auto vtable {
+                []<size_t... Indices>(std::index_sequence<Indices...>){
+                    return std::array<cases_t,4>{
+                        [](Visitor vis, Variant0 v0, Variant1 v1){ 
+                            constexpr auto multi_idx = qc::tools::from_1d_index<2,2>(Indices);
+                            return vis(std::get<multi_idx[0]>(v0), std::get<multi_idx[1]>(v1));
+                    }... };
+                    
+                }(std::make_index_sequence<vtable_size>())
+            };
 
-			return vtable[dev::tools::to_index<2, 2>(
-			    va0.index(), va1.index())](visitor, va0, va1);
-		}
-	}; // namespace example
-} // namespace dev
+            return vtable[qc::tools::to_1d_index<2,2>(v0.index(), v1.index())](visitor, v0, v1);
+        }
+    };
+    */
+}
 
-template <typename... Callables> struct Visitor : Callables... {
-	using Callables::operator()...;
+template<typename... Callables>
+struct Visitor : Callables...{
+    using Callables::operator()...;
 };
 
-void test_single_dispatch() {
-	std::variant<int, float, double> va{0};
-}
+// Codegen - https://godbolt.org/z/8jTGTxezn
+namespace qc::flat_array{
+    template <typename Visitor, typename... Variants>
+    static constexpr decltype(auto) make_flat_array(Visitor&& visitor, Variants&&... vs){
+        constexpr std::size_t vtable_size = (std::variant_size_v<std::remove_cvref_t<Variants>> * ...);
 
-void test_double_dispatch() {
-	std::variant<int, float> va1{0};
-	std::variant<int, float> va2{3.14f};
+        // Each entry in the vtable should have the shape [](Visitor visitor, Variants... vs){}
+        using result_t = decltype(std::forward<Visitor>(visitor)(std::get<0>(std::forward<Variants>(vs))...));
+        using cases_t = result_t(*)(Visitor&&, Variants&&...);
 
-	auto result = dev::example::visit(
-	    Visitor{
-	        [](int, int) -> std::string { return "(int, int)"; },
-	        [](int, float) -> std::string { return "(int, float)"; },
-	        [](float, int) -> std::string { return "(float, int)"; },
-	        [](float, float) -> std::string { return "(float, float)"; },
-	    },
-	    va1,
-	    va2);
-	std::cout << "result = " << result << "\n";
-}
+        static constexpr auto vtable{
+            []<size_t... Indices>(std::index_sequence<Indices...>){
+                constexpr std::array<std::size_t, sizeof...(Variants)> dimensions = { std::variant_size_v<std::remove_cvref_t<Variants>>... };
+                constexpr std::size_t vtable_size = (std::variant_size_v<std::remove_cvref_t<Variants>> * ...);
+                return std::array<cases_t, vtable_size>{
+                    [](Visitor&& vis, Variants&&... vs) -> result_t{
+                        constexpr auto multi_idx = qc::tools::from_1d_index<std::variant_size_v<std::remove_cvref_t<Variants>>...>(Indices);
+                        return [&]<size_t... Is>(std::index_sequence<Is...>){
+                            //return vis((static_cast<std::variant_alternative_t<multi_idx[Is], std::remove_cvref_t<Variants>>>(std::get<multi_idx[Is]>(vs)))...);
+                            return std::forward<Visitor>(vis)(*(std::get_if<multi_idx[Is]>(&std::forward<Variants>(vs)))...);
+                        }(std::make_index_sequence<sizeof...(Variants)>());
+                    }...
+                };
+            }(std::make_index_sequence<vtable_size>())
+        };
+        return vtable;
+    }
 
-namespace dev::flat_array {
-	template <typename Visitor, typename... Variants>
+    template <typename Visitor, typename... Variants>
 	decltype(auto) visit(Visitor &&visitor, Variants &&...vs) {
-		constexpr std::size_t vtable_size =
-		    (std::variant_size_v<std::remove_cvref_t<Variants>> * ...);
+        static constexpr auto vtable = make_flat_array(std::forward<Visitor>(visitor), std::forward<Variants>(vs)...);
 
-		// Each entry in the vtable should have the shape [](Visitor
-		// visitor, Variants... vs){}
-		using result_t = decltype(visitor(std::get<0>(vs)...));
-		using cases_t = result_t (*)(Visitor, Variants...);
-
-		static constexpr auto vtable{[]<size_t... Indices>(
-		                                 std::index_sequence<Indices...>) {
-			constexpr std::array<std::size_t, sizeof...(Variants)>
-			    dimensions = {
-			        std::variant_size_v<std::remove_cvref_t<Variants>>...};
-			constexpr std::size_t vtable_size =
-			    (std::variant_size_v<std::remove_cvref_t<Variants>> * ...);
-			return std::array<cases_t, vtable_size>{[](auto vis,
-			                                           auto... vs)
-			                                            -> result_t {
-				constexpr auto multi_idx = dev::tools::from_index<
-				    std::variant_size_v<std::remove_cvref_t<Variants>>...>(
-				    Indices);
-				return [&]<size_t... Is>(std::index_sequence<Is...>) {
-					return vis((static_cast<std::variant_alternative_t<
-					                multi_idx[Is],
-					                std::remove_cvref_t<Variants>>>(
-					    std::get<multi_idx[Is]>(vs)))...);
-				}(std::make_index_sequence<sizeof...(Variants)>());
-			}...};
-		}(std::make_index_sequence<vtable_size>())};
-
-		auto i = dev::tools::to_index<
-		    std::variant_size_v<std::remove_cvref_t<Variants>>...>(
-		    vs.index()...);
-		return vtable[i](visitor, vs...);
+        auto i = qc::tools::to_1d_index<std::variant_size_v<std::remove_cvref_t<Variants>>...>(vs.index()...);
+        return vtable[i](std::forward<Visitor>(visitor), std::forward<Variants>(vs)... );
 	}
-} // namespace dev::flat_array
+}
 
-void test_multiple_dispatch() {
-	std::variant<int, float, double> v1{2.5f};
-	std::variant<int, float, double> v2{3};
-	// std::variant<char, int, long, float, double> v3{'H'};
+// Godbolt: https://godbolt.org/z/4nKqehq11
+namespace qc{
+    // An implementation of visit using multi-dimensional arrays
+    namespace multidim_array{
+        template<typename Visitor, typename... Vs>
+        constexpr decltype(auto) visit(Visitor&& visitor, Vs&&... vs){
+            auto func_table = qc::make_func_poly_array<Visitor, Vs...>();
+            auto func = func_table.at(vs.index()...);
+            return func(std::forward<Visitor>(visitor), std::forward<Vs>(vs)...);
+        }
+    }
+}
 
-	auto result = dev::flat_array::visit(
-	    Visitor{
-	        [](int, int) -> std::string { return "(int, int)"; },
-	        [](int, float) -> std::string { return "(int, float)"; },
-	        [](int, double) -> std::string { return "(int, double)"; },
-	        [](float, int) -> std::string { return "(float, int)"; },
-	        [](float, float) -> std::string { return "(float, float)"; },
-	        [](float, double) -> std::string { return "(float, double)"; },
-	        [](double, int) -> std::string { return "(double, int)"; },
-	        [](double, float) -> std::string { return "(double, float)"; },
-	        [](double, double) -> std::string {
-		        return "(double, double)";
-	        },
-	    },
-	    v1,
-	    v2);
-
-	std::cout << "result = " << result << "\n";
+namespace qc{
+    namespace mdspan_impl{
+        template<typename Visitor, typename... Variants>
+        constexpr decltype(auto) visit(Visitor&& visitor, Variants&&... vs){
+            using result_t = decltype(std::declval<Visitor>()(
+                std::declval<std::variant_alternative_t<0, std::remove_cvref_t<Variants>>>()...
+            ));
+            using cases_t = result_t(*)(Visitor&&, Variants&&...);
+            constexpr std::size_t vtable_size = (std::variant_size_v<std::remove_cvref_t<Variants>> * ...);
+            static constexpr auto func_table = qc::flat_array::make_flat_array(std::forward<Visitor>(visitor), std::forward<Variants>(vs)...);
+            static_assert(std::is_same_v<decltype(func_table), const std::array<cases_t, vtable_size>>);
+            // LayoutPolicy
+            // When constructing the flat array of function pointers, the multi-dimensional index <i,j,k> is mapped to an offset 
+            // in the 1d-array, such that the right-most index gives stride-1 access to the underlying memory.
+            // This is also called row-major order. Hence, the default LayoutPolicy = std::layout_right should
+            // work just fine for our use-case.
+            // 
+            // AccessorPolicy
+            // Specifies how to convert the underlying 1D-index to a reference to T. 
+            auto data_ = const_cast<cases_t*>(func_table.data());
+            static auto func_table_view = std::mdspan<cases_t, std::extents<std::size_t, std::variant_size_v<std::remove_cvref_t<Variants>>...>>(data_);
+            auto func = func_table_view[vs.index()...];
+            return func(std::forward<Visitor>(visitor), std::forward<Variants>(vs)...);
+        }
+    }
 }

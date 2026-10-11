@@ -4,8 +4,7 @@ project(qc_libcpp VERSION 1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(set_libcpp_dirs)
-include(clang_tidy)
+include(set_xstd_dirs)
 
 # #################################################################
 # Global Settings
@@ -22,8 +21,3 @@ option(ENABLE_CLANG_TIDY "" OFF)
 # #################################################################
 add_subdirectory(core)
 add_subdirectory(tests)
-
-# #################################################################
-# Enable clang-tidy
-# #################################################################
-enable_clang_tidy_for(core)

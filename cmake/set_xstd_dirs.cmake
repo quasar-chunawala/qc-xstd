@@ -1,0 +1,3 @@
+cmake_path(SET XSTD_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
+set(XSTD_CORE_ROOT "${XSTD_ROOT}/core")
+set(XSTD_TESTS_ROOT "${XSTD_ROOT}/tests")
