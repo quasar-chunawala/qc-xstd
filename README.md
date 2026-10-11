@@ -3,11 +3,32 @@ A collection of standard containers, RAII wrappers for modern C++ and used in qu
 
 ## Configure and Build
 
-- For Linux, follow the instructions in [SetupLinux.md](./SetupLinux.md).
+### Linux
 
-- For Win64, refer [SetupWin64.md](./SetupWin64.md).
+```bash
+cmake --preset linux-gcc16-x64-debug            # Configure step
+cmake --build --preset linux-gcc16-x64-debug    # Build step
+```
 
-- For MacOS, refer [SetupMacOS.md](./SetupMacOS.md)
+To install dependencies for Linux, follow the instructions in [SetupLinux.md](./BuildLinux.md).
+
+### Win64
+
+```bash
+cmake --preset win64-gcc16-x64-debug            # Configure step
+cmake --build --preset win64-gcc16-x64-debug    # Build step
+```
+
+To install dependencies for Win64, refer [SetupWin64.md](./SetupWin64.md).
+
+### MacOS
+
+```bash
+cmake --preset macos-gcc16-debug            # Configure step
+cmake --build --preset macos-gcc16-debug    # Build step
+```
+
+To install dependencies for MacOS, refer [SetupMacOS.md](./SetupMacOS.md)
 
 ## Compatibility
 
@@ -20,7 +41,7 @@ This library is header-only and can be copied directly into your project or fetc
 
 ### CMake FetchContent
 
-```
+```cmake
 include(FetchContent)
 
 FetchContent_Declare(
