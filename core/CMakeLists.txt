@@ -28,6 +28,8 @@ add_library(libxstd SHARED)
 target_sources(libxstd
     PRIVATE 
         ${CORE_SOURCES}
+        containers/soa_vector.h
+        utilities/exception_guard.h
     PUBLIC 
         FILE_SET HEADERS
         BASE_DIRS "${XSTD_ROOT}"
@@ -35,3 +37,5 @@ target_sources(libxstd
 )
 
 
+target_compile_features(libxstd PRIVATE cxx_std_26)
+target_compile_options(libxstd PRIVATE -Wall -Wpedantic -freflection)

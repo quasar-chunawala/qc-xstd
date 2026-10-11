@@ -7,7 +7,8 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         },
         {
@@ -16,7 +17,8 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         },
         {
@@ -224,6 +226,15 @@
         {
             "name": "macos-debug",
             "configurePreset": "macos-debug"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "linux-gcc16-x64-debug",
+            "configurePreset": "linux-gcc16-x64-debug",
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }

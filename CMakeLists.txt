@@ -19,5 +19,7 @@ option(ENABLE_CLANG_TIDY "" OFF)
 # #################################################################
 # Project components
 # #################################################################
+enable_testing()
+
 add_subdirectory(core)
 add_subdirectory(tests)
