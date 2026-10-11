@@ -54,21 +54,22 @@
             }
         },
         {
-            "name": "windows-msvc-x64-release",
+            "name": "windows-gcc-x64-release",
             "inherits": "config-base-release",
             "architecture": "x64",
+            "environment": {
+                "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
+            },
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
                 "CMAKE_SYSTEM_PROCESSOR": "x86_64"
-            }
-        },
-        {
-            "name": "windows-clang-x64-release",
-            "inherits": "config-base-release",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             }
         },
         {
@@ -144,22 +145,22 @@
             }
         },
         {
-            "name": "windows-msvc-x64-debug",
+            "name": "windows-gcc-x64-debug",
             "inherits": "config-base-debug",
             "architecture": "x64",
+            "environment": {
+                "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
+            },
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_C_COMPILER": "C:/msys64/ucrt64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/ucrt64/bin/g++.exe",
                 "CMAKE_SYSTEM_PROCESSOR": "x86_64"
-            }
-        },
-        {
-            "name": "windows-clang-x64-debug",
-            "hidden": true,
-            "inherits": "config-base-debug",
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             }
         },
         {
@@ -188,12 +189,8 @@
             "configurePreset": "linux-clang22-arm64-release"
         },
         {
-            "name": "windows-msvc-x64-release",
-            "configurePreset": "windows-msvc-x64-release"
-        },
-        {
-            "name": "windows-clang-x64-release",
-            "configurePreset": "windows-clang-x64-release"
+            "name": "windows-gcc-x64-release",
+            "configurePreset": "windows-gcc-x64-release"
         },
         {
             "name": "macos-release",
@@ -216,12 +213,8 @@
             "configurePreset": "linux-clang22-arm64-debug"
         },
         {
-            "name": "windows-msvc-x64-debug",
-            "configurePreset": "windows-msvc-x64-debug"
-        },
-        {
-            "name": "windows-clang-x64-debug",
-            "configurePreset": "windows-clang-x64-debug"
+            "name": "windows-gcc-x64-debug",
+            "configurePreset": "windows-gcc-x64-debug"
         },
         {
             "name": "macos-debug",
