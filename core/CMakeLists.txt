@@ -3,6 +3,18 @@ cmake_minimum_required(VERSION 3.3...4.0)
 set(CMAKE_CXX_STANDARD 26)              # C++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Error, if the compiler doesn't support it
 
+include(architecture)
+include(check_compiler)
+set(arch "")
+xstd_get_target(arch)
+message(STATUS "Architecture : ${arch}")
+
+set(compiler "")
+set(version "")
+xstd_check_compiler(compiler version)
+message(STATUS "Compiler: ${compiler}")
+message(STATUS "Version: ${version}")
+
 set(CORE_SOURCES
     "${XSTD_CORE_ROOT}/string/string.cpp"
 )
@@ -25,6 +37,12 @@ set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/utilities/exception_guard.h"
 )
 
+# Reflections are supported on GCC 16 and above. 
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 16)
+    set(CPP26_REFLECTIONS_SUPPORTED 1)
+    list(APPEND CORE_HEADERS "${XSTD_CORE_ROOT}/containers/soa_vector.h")
+endif()
+
 add_library(libxstd SHARED)
 
 target_sources(libxstd
@@ -37,5 +55,9 @@ target_sources(libxstd
 )
 
 
-target_compile_features(libxstd PRIVATE cxx_std_26)
-target_compile_options(libxstd PRIVATE -Wall -Wpedantic -freflection)
+target_compile_features(libxstd PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_options(libxstd PRIVATE -Wall -Wpedantic)
+
+if(CPP26_REFLECTIONS_SUPPORTED)
+    target_compile_options(libxstd PUBLIC -freflection)
+endif()
