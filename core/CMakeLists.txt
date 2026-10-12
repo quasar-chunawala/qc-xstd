@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.3...4.0)
 
-set(CMAKE_CXX_STANDARD 26)              # C++ standard
-set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Error, if the compiler doesn't support it
-
 include(architecture)
 include(check_compiler)
 set(arch "")
@@ -14,6 +11,17 @@ set(version "")
 xstd_check_compiler(compiler version)
 message(STATUS "Compiler: ${compiler}")
 message(STATUS "Version: ${version}")
+
+if(${compiler} STREQUAL "GCC" AND ${version} VERSION_GREATER_EQUAL 16)
+  set(XSTD_CXX_STANDARD 26)
+else()
+  set(XSTD_CXX_STANDARD 23)
+endif()
+
+set(CMAKE_CXX_STANDARD ${XSTD_CXX_STANDARD})              # C++ standard
+set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Error, if the compiler doesn't support it
+
+
 
 set(CORE_SOURCES
     "${XSTD_CORE_ROOT}/string/string.cpp"
@@ -56,7 +64,11 @@ target_sources(libxstd
 
 
 target_compile_features(libxstd PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
-target_compile_options(libxstd PRIVATE -Wall -Wpedantic)
+if(MSVC)
+    target_compile_options(libxstd PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(libxstd PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 if(CPP26_REFLECTIONS_SUPPORTED)
     target_compile_options(libxstd PUBLIC -freflection)
