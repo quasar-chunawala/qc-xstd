@@ -3,48 +3,24 @@ A collection of standard containers, RAII wrappers for modern C++ and used in qu
 
 ## Configure and Build
 
-### Linux
+To list all presets, execute:
 
 ```bash
-cmake --preset linux-gcc16-x64-debug            # Configure step
-cmake --build --preset linux-gcc16-x64-debug    # Build step
+cmake --list-presets
 ```
 
-To install dependencies for Linux, follow the instructions in [SetupLinux.md](./BuildLinux.md).
+To configure and build the code, run:
 
-### Win64 MSVC(Microsoft Visual C++) toolchain
-
-#### Visual Studio 2022
-
-```bash
-cmake --preset windows-msvc2022-x64-debug           # Configure step
-cmake --build --preset windows-msvc2022-x64-debug    # Build step
+```
+cmake --preset <preset-name>
+cmake --build --preset <preset-name>
 ```
 
-#### Visual Studio 2026
+- To install dependencies for Linux, follow the instructions in [SetupLinux.md](./SetupLinux.md).
 
-```bash
-cmake --preset windows-msvc2026-x64-debug           # Configure step
-cmake --build --preset windows-msvc2026-x64-debug    # Build step
-```
+- To install dependencies for Win64, refer [SetupWin64.md](./SetupWin64.md).
 
-###  Win64 GNU toolchain
-
-```bash
-cmake --preset win64-gcc16-x64-debug            # Configure step
-cmake --build --preset win64-gcc16-x64-debug    # Build step
-```
-
-To install dependencies for Win64, refer [SetupWin64.md](./SetupWin64.md).
-
-### MacOS
-
-```bash
-cmake --preset macos-gcc16-debug            # Configure step
-cmake --build --preset macos-gcc16-debug    # Build step
-```
-
-To install dependencies for MacOS, refer [SetupMacOS.md](./SetupMacOS.md)
+- To install dependencies for MacOS, refer [SetupMacOS.md](./SetupMacOS.md)
 
 ## Compatibility
 
