@@ -18,14 +18,14 @@ Depending on your Microsoft Visual Studio installation, you can run the CMake co
 #### Visual Studio 2022
 
 ```bash
-cmake --preset windows-msvc2022-x64-debug           # Configure step
+cmake --preset windows-msvc2022-x64                  # Configure step
 cmake --build --preset windows-msvc2022-x64-debug    # Build step
 ```
 
 #### Visual Studio 2026
 
 ```bash
-cmake --preset windows-msvc2026-x64-debug           # Configure step
+cmake --preset windows-msvc2026-x64                 # Configure step
 cmake --build --preset windows-msvc2026-x64-debug    # Build step
 ```
 
