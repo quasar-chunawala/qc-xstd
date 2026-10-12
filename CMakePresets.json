@@ -380,12 +380,12 @@
             "configurePreset": "macos-x86_64-clang-debug"
         },
         {
-            "name": "windows-msvc2026-x64",
+            "name": "windows-msvc2026-x64-debug",
             "configurePreset": "windows-msvc2026-x64",
             "configuration": "Debug"
         },
         {
-            "name": "windows-msvc2022-x64",
+            "name": "windows-msvc2022-x64-debug",
             "configurePreset": "windows-msvc2022-x64",
             "configuration": "Debug"
         }
