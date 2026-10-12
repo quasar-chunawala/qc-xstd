@@ -12,6 +12,7 @@ set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/concurrency/threadsafe_stack.h"
     "${XSTD_CORE_ROOT}/containers/forward_list.h"
     "${XSTD_CORE_ROOT}/containers/vector.h"
+    "${XSTD_CORE_ROOT}/containers/soa_vector.h"
     "${XSTD_CORE_ROOT}/lock_free/spsc_queue.h"
     "${XSTD_CORE_ROOT}/smart_pointers/shared_ptr.h"
     "${XSTD_CORE_ROOT}/smart_pointers/unique_ptr.h"
@@ -21,6 +22,7 @@ set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/tagged_union/utils.h"
     "${XSTD_CORE_ROOT}/tagged_union/variant.h"
     "${XSTD_CORE_ROOT}/tagged_union/visit.h"
+    "${XSTD_CORE_ROOT}/utilities/exception_guard.h"
 )
 
 add_library(libxstd SHARED)
@@ -28,8 +30,6 @@ add_library(libxstd SHARED)
 target_sources(libxstd
     PRIVATE 
         ${CORE_SOURCES}
-        containers/soa_vector.h
-        utilities/exception_guard.h
     PUBLIC 
         FILE_SET HEADERS
         BASE_DIRS "${XSTD_ROOT}"

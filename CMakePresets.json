@@ -74,12 +74,69 @@
             }
         },
         {
-            "name": "macos-release",
+            "name": "macos-arm64-release",
             "inherits": "config-base-release",
+            "hidden": true,
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64"
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_SYSROOT": "macosx"
             }
+        },
+        {
+            "name": "macos-x86_64-release",
+            "inherits": "config-base-release",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_OSX_ARCHITECTURES": "x86_64",
+                "CMAKE_OSX_SYSROOT": "macosx"
+            }
+        },
+        {
+            "name": "macos-arm64-gcc-release",
+            "inherits": "macos-arm64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "/opt/homebrew/opt/gcc@16/bin/gcc-16",
+                "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/gcc@16/bin/g++-16"
+            }
+        },
+        {
+            "name": "macos-x86_64-gcc-release",
+            "inherits": "macos-x86_64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "/opt/homebrew/opt/gcc@16/bin/gcc-16",
+                "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/gcc@16/bin/g++-16"
+            }
+        },
+        {
+        "name": "macos-arm64-clang-release",
+        "inherits": "macos-arm64-release",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm@22/bin/clang",
+            "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm@22/bin/clang++"
+        }
+        },
+        {
+        "name": "macos-x86_64-gcc-release",
+        "inherits": "macos-x86_64-release",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_C_COMPILER": "/usr/local/opt/gcc@16/bin/gcc-16",
+            "CMAKE_CXX_COMPILER": "/usr/local/opt/gcc@16/bin/g++-16"
+        }
+        },
+        {
+        "name": "macos-x86_64-clang-release",
+        "inherits": "macos-x86_64-release",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_C_COMPILER": "/usr/local/opt/llvm@22/bin/clang",
+            "CMAKE_CXX_COMPILER": "/usr/local/opt/llvm@22/bin/clang++"
+        }
         },
         {
             "name": "linux-gcc-x64-debug",
@@ -166,11 +223,60 @@
             }
         },
         {
-            "name": "macos-debug",
+            "name": "macos-arm64-debug",
             "inherits": "config-base-debug",
+            "hidden": true,
             "cacheVariables": {
-                "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64"
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_SYSROOT": "macosx",
+                "CMAKE_BUILD_TYPE":"Debug"
             }
+        },
+        {
+            "name": "macos-x86_64-debug",
+            "inherits": "config-base-debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_OSX_ARCHITECTURES": "x86_64",
+                "CMAKE_OSX_SYSROOT": "macosx",
+                "CMAKE_BUILD_TYPE":"Debug"
+            }
+        },
+        {
+            "name": "macos-arm64-gcc-debug",
+            "inherits": "macos-arm64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "/opt/homebrew/opt/gcc@16/bin/gcc-16",
+                "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/gcc@16/bin/g++-16"
+            }
+        },
+        {
+        "name": "macos-arm64-clang-debug",
+        "inherits": "macos-arm64-debug",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm@22/bin/clang",
+            "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm@22/bin/clang++"
+        }
+        },
+        {
+        "name": "macos-x86_64-gcc-debug",
+        "inherits": "macos-x86_64-debug",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_C_COMPILER": "/usr/local/opt/gcc@16/bin/gcc-16",
+            "CMAKE_CXX_COMPILER": "/usr/local/opt/gcc@16/bin/g++-16"
+        }
+        },
+        {
+        "name": "macos-x86_64-clang-debug",
+        "inherits": "macos-x86_64-debug",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_C_COMPILER": "/usr/local/opt/llvm@22/bin/clang",
+            "CMAKE_CXX_COMPILER": "/usr/local/opt/llvm@22/bin/clang++"
+        }
         }
     ],
     "buildPresets": [
@@ -195,8 +301,20 @@
             "configurePreset": "windows-gcc-x64-release"
         },
         {
-            "name": "macos-release",
-            "configurePreset": "macos-release"
+            "name": "macos-arm64-gcc-release",
+            "configurePreset": "macos-arm64-gcc-release"
+        },
+        {
+            "name": "macos-arm64-clang-release",
+            "configurePreset": "macos-arm64-clang-release"
+        },
+        {
+            "name": "macos-x86_64-gcc-release",
+            "configurePreset": "macos-x86_64-gcc-release"
+        },
+        {
+            "name": "macos-x86_64-clang-release",
+            "configurePreset": "macos-x86_64-clang-release"
         },
         {
             "name": "linux-gcc16-x64-debug",
@@ -219,14 +337,33 @@
             "configurePreset": "windows-gcc-x64-debug"
         },
         {
-            "name": "macos-debug",
-            "configurePreset": "macos-debug"
+            "name": "macos-arm64-gcc-debug",
+            "configurePreset": "macos-arm64-gcc-debug"
+        },
+        {
+            "name": "macos-arm64-clang-debug",
+            "configurePreset": "macos-arm64-clang-debug"
+        },
+        {
+            "name": "macos-x86_64-gcc-debug",
+            "configurePreset": "macos-x86_64-gcc-debug"
+        },
+        {
+            "name": "macos-x86_64-clang-debug",
+            "configurePreset": "macos-x86_64-clang-debug"
         }
     ],
     "testPresets": [
         {
             "name": "linux-gcc16-x64-debug",
             "configurePreset": "linux-gcc16-x64-debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "macos-arm64-gcc-debug",
+            "configurePreset": "macos-arm64-gcc-debug",
             "output": {
                 "outputOnFailure": true
             }

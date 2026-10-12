@@ -9,10 +9,7 @@ Clang-Format.
 # Compiler toolchain, make, and Apple's clang/lldb (replaces base-devel)
 xcode-select --install
 
-LLVM_VERSION=22
-GCC_VERSION=16
-brew install cmake ninja ccache git "llvm@${LLVM_VERSION}" "gcc@${GCC_VERSION}"
-brew install --cask visual-studio-code
+brew install cmake ninja ccache git gcc@16 llvm@22
 ```
 
 
