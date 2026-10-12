@@ -121,15 +121,6 @@
         }
         },
         {
-        "name": "macos-x86_64-gcc-release",
-        "inherits": "macos-x86_64-release",
-        "cacheVariables": {
-            "CMAKE_BUILD_TYPE": "Release",
-            "CMAKE_C_COMPILER": "/usr/local/opt/gcc@16/bin/gcc-16",
-            "CMAKE_CXX_COMPILER": "/usr/local/opt/gcc@16/bin/g++-16"
-        }
-        },
-        {
         "name": "macos-x86_64-clang-release",
         "inherits": "macos-x86_64-release",
         "cacheVariables": {
