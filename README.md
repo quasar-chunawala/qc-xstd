@@ -12,7 +12,23 @@ cmake --build --preset linux-gcc16-x64-debug    # Build step
 
 To install dependencies for Linux, follow the instructions in [SetupLinux.md](./BuildLinux.md).
 
-### Win64
+### Win64 MSVC(Microsoft Visual C++) toolchain
+
+#### Visual Studio 2022
+
+```bash
+cmake --preset windows-msvc2022-x64-debug           # Configure step
+cmake --build --preset windows-msvc2022-x64-debug    # Build step
+```
+
+#### Visual Studio 2026
+
+```bash
+cmake --preset windows-msvc2026-x64-debug           # Configure step
+cmake --build --preset windows-msvc2026-x64-debug    # Build step
+```
+
+###  Win64 GNU toolchain
 
 ```bash
 cmake --preset win64-gcc16-x64-debug            # Configure step

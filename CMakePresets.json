@@ -279,9 +279,8 @@
         }
         },
         {
-            "name": "windows-msvc-x64",
-            "displayName": "Windows MSVC x64 (Visual Studio solution)",
-            "generator": "Visual Studio 18 2026",
+            "name": "windows-msvc-x64-base",
+            "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "architecture": {
                 "value": "x64",
@@ -302,6 +301,18 @@
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
             }
+        },
+        {
+            "name": "windows-msvc2026-x64",
+            "inherits": "windows-msvc-x64-base",
+            "displayName": "Microsoft Visual Studio 18 2026",
+            "generator": "Visual Studio 18 2026"
+        },
+        {
+            "name": "windows-msvc2022-x64",
+            "inherits": "windows-msvc-x64-base",
+            "displayName": "Microsoft Visual Studio 17 2022",
+            "generator": "Visual Studio 17 2022"
         }
     ],
     "buildPresets": [
@@ -378,8 +389,13 @@
             "configurePreset": "macos-x86_64-clang-debug"
         },
         {
-            "name": "windows-msvc-x64-debug",
-            "configurePreset": "windows-msvc-x64",
+            "name": "windows-msvc2026-x64",
+            "configurePreset": "windows-msvc2026-x64",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-msvc2022-x64",
+            "configurePreset": "windows-msvc2022-x64",
             "configuration": "Debug"
         }
     ],
@@ -399,8 +415,16 @@
             }
         },
         {
-            "name": "windows-msvc-x64-debug",
-            "configurePreset": "windows-msvc-x64",
+            "name": "windows-msvc2026-x64-debug",
+            "configurePreset": "windows-msvc2026-x64",
+            "configuration": "Debug",
+            "output":{
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows-msvc2022-x64-debug",
+            "configurePreset": "windows-msvc2022-x64",
             "configuration": "Debug",
             "output":{
                 "outputOnFailure": true
