@@ -59,13 +59,20 @@ Runtime precondition checks (null pointers, out-of-bounds indices, invalid itera
 
 | Macro | Options / Default | Description |
 |---|---|---|
-| `XSTD_HARDENING_MODE` | `XSTD_HARDENING_MODE_NONE` (Default)<br>`XSTD_HARDENING_MODE_FAST`<br>`XSTD_HARDENING_MODE_EXTENSIVE`<br>`XSTD_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
+| `XSTD_HARDENING_MODE` | `XSTD_HARDENING_MODE_NONE` (Default)<br>`XSTD_HARDENING_MODE_FAST`<br>`XSTD_HARDENING_MODE_EXTENSIVE`<br>`XSTD_HARDENING_MODE_DEBUG` | Enables precondition checks across all API boundaries. |
 | `XSTD_ASSERT_MODE` | `XSTD_ASSERT_MODE_LOG_TRAP`(Default)<br>`XSTD_ASSERT_MODE_NONE`<br>`XSTD_ASSERT_MODE_TRAP`<br>`XSTD_ASSERT_MODE_ABORT`<br>`XSTD_ASSERT_MODE_LOG_ABORT` | Defines failure action when a hardening assertion triggers. |
 
+### Example
+
 ```cpp
-#define XSTD_HARDENING_MODE XSTD_HARDENING_MODE_ALL
+#define XSTD_HARDENING_MODE XSTD_HARDENING_MODE_DEBUG
 #define XSTD_ASSERT_MODE XSTD_ASSERT_MODE_LOG_TRAP
 #include <core/containers/vector.h>
 ```
 
-When hardening mode is turned off, all checks compile away entirely with zero runtime overhead.
+### Description
+
+- `XSTD_HARDENING_MODE_NONE`. When hardening mode is turned off, all checks compile away entirely with zero runtime overhead.
+- `XSTD_HARDENING_MODE_FAST`. A set of securitiy critical checks that can be done with relatively little overhead in constant time and intended to be used in production. 
+- `XSTD_HARDENING_MODE_EXTENSIVE`. Contains all the checks from the fast mode and some additional checks that incur relatively little overhead but aren't security critical. 
+- `XSTD_DEBUG_MODE`. This mode should be used in non-production environments(such as test-suites, CI or local development).
