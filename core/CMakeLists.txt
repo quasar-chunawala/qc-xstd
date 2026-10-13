@@ -26,6 +26,7 @@ set(CORE_SOURCES "")
 set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/concurrency/threadsafe_queue.h"
     "${XSTD_CORE_ROOT}/concurrency/threadsafe_stack.h"
+    "${XSTD_CORE_ROOT}/configuration/hardening.h"
     "${XSTD_CORE_ROOT}/containers/forward_list.h"
     "${XSTD_CORE_ROOT}/containers/vector.h"
     "${XSTD_CORE_ROOT}/containers/soa_vector.h"
@@ -39,6 +40,7 @@ set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/tagged_union/variant.h"
     "${XSTD_CORE_ROOT}/tagged_union/visit.h"
     "${XSTD_CORE_ROOT}/utilities/exception_guard.h"
+    "${XSTD_CORE_ROOT}/utilities/contract_assert.h"
 )
 
 # Reflections are supported on GCC 16 and above. 
