@@ -21,7 +21,7 @@
 #endif
 
 #ifndef XSTD_ASSERT_MODE
-#define XSTD_ASSERT_MODE QX_ASSERT_MODE_LOG_TRAP // default assertion mode
+#define XSTD_ASSERT_MODE XSTD_ASSERT_MODE_LOG_TRAP // default assertion mode
 #else
 #if (XSTD_ASSERT_MODE > XSTD_ASSERT_MODE_LOG_ABORT)
 #undef XSTD_ASSERT_MODE
