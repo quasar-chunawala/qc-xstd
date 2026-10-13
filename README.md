@@ -67,3 +67,5 @@ Runtime precondition checks (null pointersm out-of-bounds indices, invalid itera
 #define XSTD_ASSERT_MODE XSTD_ASSERT_MODE_LOG_TRAP
 #include <xstd/vector.h>
 ```
+
+When hardening mode is turned off, all checks compile away entirely with zero runtime overhead.
