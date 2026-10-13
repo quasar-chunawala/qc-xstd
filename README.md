@@ -51,4 +51,13 @@ FetchContent_MakeAvailable(xstd)
 target_link_libraries(your_target PRIVATE xstd)
 ```
 
-## Quick Start
+## Configuration Macros
+
+### Hardening and Contract Checks
+
+Runtime precondition checks (null pointersm out-of-bounds indices, invalid iterator ranges) can be configured globally:
+
+| Macro | Options / Default | Description |
+|---|---|---|
+| `QX_HARDENING_MODE` | `QX_HARDENING_MODE_OFF` (Default)<br>`QX_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
+| `QX_ASSERT_MODE` <br> `QX_ASSERT_MODE_LOG_TRAP` (Default)<br>`QX_ASSERT_MODE_NONE`<br>`QX_ASSERT_MODE_TRAP`<br>`QX_ASSERT_MODE_ABORT`<br>`QX_ASSERT_MODE_LOG_ABORT` | Defines failure action when a hardening assertion triggers. |
