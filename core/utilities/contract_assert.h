@@ -34,8 +34,15 @@
 // of the library. Different hardening modes make different tradeoff between
 // checking and runtime performance.
 
-#ifndef XSTD_HARDENING_MODE
-#define XSTD_HARDENING_MODE XSTD_HARDENING_MODE_NONE
+#if XSTD_HARDENING_MODE != XSTD_HARDENING_MODE_NONE &&                         \
+    XSTD_HARDENING_MODE != XSTD_HARDENING_MODE_FAST &&                         \
+    XSTD_HARDENING_MODE != XSTD_HARDENING_MODE_EXTENSIVE &&                    \
+    XSTD_HARDENING_MODE != XSTD_HARDENING_MODE_DEBUG
+#error _LIBCPP_HARDENING_MODE must be set to one of the following values: \
+XSTD_HARDENING_MODE_NONE, \
+XSTD_HARDENING_MODE_FAST, \
+XSTD_HARDENING_MODE_EXTENSIVE, \
+XSTD_HARDENING_MODE_DEBUG
 #endif
 
 // contract assert behavior (default: IO-logging and trap)
