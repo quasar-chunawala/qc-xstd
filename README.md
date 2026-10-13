@@ -59,7 +59,7 @@ Runtime precondition checks (null pointers, out-of-bounds indices, invalid itera
 
 | Macro | Options / Default | Description |
 |---|---|---|
-| `XSTD_HARDENING_MODE` | `XSTD_HARDENING_MODE_OFF` (Default)<br>`XSTD_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
+| `XSTD_HARDENING_MODE` | `XSTD_HARDENING_MODE_NONE` (Default)<br>`XSTD_HARDENING_MODE_FAST`<br>`XSTD_HARDENING_MODE_EXTENSIVE`<br>`XSTD_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
 | `XSTD_ASSERT_MODE` | `XSTD_ASSERT_MODE_LOG_TRAP`(Default)<br>`XSTD_ASSERT_MODE_NONE`<br>`XSTD_ASSERT_MODE_TRAP`<br>`XSTD_ASSERT_MODE_ABORT`<br>`XSTD_ASSERT_MODE_LOG_ABORT` | Defines failure action when a hardening assertion triggers. |
 
 ```cpp
