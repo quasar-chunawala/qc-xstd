@@ -4,6 +4,8 @@
 #include <print>
 #include <ranges>
 
+#include <utilities/contracts.h>
+
 namespace qc {
 	namespace utils {
 #if __cpp_impl_reflection
