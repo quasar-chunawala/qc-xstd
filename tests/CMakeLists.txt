@@ -42,7 +42,7 @@ target_sources(xstd_tests
 
 target_link_libraries(xstd_tests
     PRIVATE
-        libxstd
+        xstd::xstd
         GTest::gtest_main
 )
 

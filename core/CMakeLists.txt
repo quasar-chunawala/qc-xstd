@@ -21,11 +21,7 @@ endif()
 set(CMAKE_CXX_STANDARD ${XSTD_CXX_STANDARD})              # C++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)     # Error, if the compiler doesn't support it
 
-
-
-set(CORE_SOURCES
-    "${XSTD_CORE_ROOT}/string/string.cpp"
-)
+set(CORE_SOURCES "")
 
 set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/concurrency/threadsafe_queue.h"
@@ -51,25 +47,25 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}"
     list(APPEND CORE_HEADERS "${XSTD_CORE_ROOT}/containers/soa_vector.h")
 endif()
 
-add_library(libxstd SHARED)
+# libxstd is a header-only library
+add_library(libxstd INTERFACE)
+add_library(xstd::xstd ALIAS libxstd)
 
 target_sources(libxstd
-    PRIVATE 
-        ${CORE_SOURCES}
-    PUBLIC 
+    INTERFACE 
         FILE_SET HEADERS
         BASE_DIRS "${XSTD_ROOT}"
         FILES ${CORE_HEADERS}
 )
 
 
-target_compile_features(libxstd PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
+target_compile_features(libxstd INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 if(MSVC)
-    target_compile_options(libxstd PRIVATE /W4 /permissive-)
+    target_compile_options(libxstd INTERFACE /W4 /permissive-)
 else()
-    target_compile_options(libxstd PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(libxstd INTERFACE -Wall -Wextra -Wpedantic)
 endif()
 
 if(CPP26_REFLECTIONS_SUPPORTED)
-    target_compile_options(libxstd PUBLIC -freflection)
+    target_compile_options(libxstd INTERFACE -freflection)
 endif()

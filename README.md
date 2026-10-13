@@ -55,7 +55,7 @@ target_link_libraries(your_target PRIVATE xstd)
 
 ### Hardening and Contract Checks
 
-Runtime precondition checks (null pointersm out-of-bounds indices, invalid iterator ranges) can be configured globally:
+Runtime precondition checks (null pointers, out-of-bounds indices, invalid iterator ranges) can be configured globally:
 
 | Macro | Options / Default | Description |
 |---|---|---|
