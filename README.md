@@ -59,5 +59,5 @@ Runtime precondition checks (null pointersm out-of-bounds indices, invalid itera
 
 | Macro | Options / Default | Description |
 |---|---|---|
-| `QX_HARDENING_MODE` | `QX_HARDENING_MODE_OFF` (Default)<br>`QX_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
-| `QX_ASSERT_MODE` <br> `QX_ASSERT_MODE_LOG_TRAP` (Default)<br>`QX_ASSERT_MODE_NONE`<br>`QX_ASSERT_MODE_TRAP`<br>`QX_ASSERT_MODE_ABORT`<br>`QX_ASSERT_MODE_LOG_ABORT` | Defines failure action when a hardening assertion triggers. |
+| `XSTD_HARDENING_MODE` | `XSTD_HARDENING_MODE_OFF` (Default)<br>`XSTD_HARDENING_MODE_ALL` | Enables precondition checks across all API boundaries. |
+| `XSTD_ASSERT_MODE` <br> `XSTD_ASSERT_MODE_LOG_TRAP` (Default)<br>`XSTD_ASSERT_MODE_NONE`<br>`XSTD_ASSERT_MODE_TRAP`<br>`XSTD_ASSERT_MODE_ABORT`<br>`XSTD_ASSERT_MODE_LOG_ABORT` | Defines failure action when a hardening assertion triggers. |
