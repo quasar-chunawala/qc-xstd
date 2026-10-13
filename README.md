@@ -76,3 +76,4 @@ Runtime precondition checks (null pointers, out-of-bounds indices, invalid itera
 - `XSTD_HARDENING_MODE_FAST`. A set of securitiy critical checks that can be done with relatively little overhead in constant time and intended to be used in production. 
 - `XSTD_HARDENING_MODE_EXTENSIVE`. Contains all the checks from the fast mode and some additional checks that incur relatively little overhead but aren't security critical. 
 - `XSTD_DEBUG_MODE`. This mode should be used in non-production environments(such as test-suites, CI or local development).
+
