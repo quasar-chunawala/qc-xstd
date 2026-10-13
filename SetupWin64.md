@@ -11,7 +11,7 @@ winget install --id Git.Git -e --source winget
 winget install --id Kitware.CMake -e
 ```
 
-### Requirements for building using Visual Studio
+### Building using Visual Studio
 
 Depending on your Microsoft Visual Studio installation, you can run the CMake configure step and generate the Visual Studio solution and project files.
 
@@ -29,9 +29,9 @@ cmake --preset windows-msvc2026-x64                 # Configure step
 cmake --build --preset windows-msvc2026-x64-debug    # Build step
 ```
 
-### Requirements for building using the GNU toolchain
+### Building using the GNU toolchain
 
-On Windows x86_64, we will install MSYS2 as the software distribution and package manager. Then, we use `pacman` to install MinGW-w64 toolchain, which includes the g++ compiler. Save the below script at `C:\dev\setup.ps1`.
+On Windows x86_64, you could also install MSYS2 as the software distribution and package manager. Then, we use `pacman` to install MinGW-w64 toolchain, which includes the g++ compiler. Save the below script at `C:\dev\setup.ps1`.
 
 ```powershell
 # c:/dev/setup.ps1
