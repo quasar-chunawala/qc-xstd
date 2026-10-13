@@ -24,8 +24,13 @@ cmake --build --preset <preset-name>
 
 ## Compatibility
 
-- **Language Standard**: C++26
-- **Compilers Tested**: GCC 16.2
+- **Language Standard**: C++23
+  - *Note*: `std::meta` requires C++26.
+- **Compilers Tested**: 
+  - Clang 22
+  - GCC 15, 16.2
+  - MSVC 17(VS 2022), 18(2026)
+  
 
 ## Integration
 
