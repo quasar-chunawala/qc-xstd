@@ -7,6 +7,8 @@ Standard: Latest
 TabWidth: 4
 UseTab: ForIndentation
 IndentWidth: 4
+IndentPPDirectives: BeforeHash
+PPIndentWidth: 4
 IndentAccessModifiers: false
 AccessModifierOffset: -4
 IndentCaseBlocks: true
@@ -14,8 +16,7 @@ IndentCaseLabels: true
 IndentRequiresClause: false
 NamespaceIndentation: All
 Language: Cpp
-SortIncludes:
-  Enabled: true
+SortIncludes: CaseSensitive
 SpaceAfterTemplateKeyword: true
 ColumnLimit: 75
 BinPackArguments: false
