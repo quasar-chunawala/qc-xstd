@@ -32,7 +32,7 @@
 
 // qc::xstd provides several hardening modes, where each mode enables a
 // set of assertions that prevent UB caused by contract violations.
-// of the library. Different hardening modes make different tradeoff
+// of the library. Different hardening modes make different tradeoffs
 // between checking and runtime performance.
 
 // If the user does not configure the hardening level, default to
@@ -118,7 +118,7 @@ void contract_fail_handler(char const *msg) {
 			(std::is_constant_evaluated() ? XSTD_TRAP()                   \
 			                              : XSTD_TRAP_WITH_MSG(tag, msg))
 	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_TRAP
-		#define QX_CONTRACT_FAIL_HANDLER(tag, loc, msg)                   \
+		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
 			(std::is_constant_evaluated()                                 \
 			     ? XSTD_TRAP()                                            \
 			     : (contract_fail_handler(loc ": " msg),                  \
@@ -127,7 +127,7 @@ void contract_fail_handler(char const *msg) {
 		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
 			(std::is_constant_evaluated() ? XSTD_TRAP() : std::abort())
 	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_ABORT
-		#define QX_CONTRACT_FAIL_HANDLER(tag, loc, msg)                   \
+		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
 			(std::is_constant_evaluated()                                 \
 			     ? XSTD_TRAP()                                            \
 			     : (contract_fail_handler(loc ": " msg), std::abort()))
