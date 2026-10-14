@@ -136,4 +136,14 @@ void contract_fail_handler(char const *msg) {
 	#endif
 #endif
 
+// Define XSTD_CONTRACT_ASSERT macro
+#ifndef XSTD_CONTRACT_ASSERT
+	#if (XSTD_HARDENING_MODE > XSTD_HARDENING_MODE_NONE) &&               \
+	    (XSTD_ASSERT_MODE > XSTD_ASSERT_MODE_NONE)
+		// TODO : Invoke the contract_fail_handler.
+	#endif
+#endif
+
+// TODO: Add support for users to inject their own contract assertion
+// failure handler.
 #endif
