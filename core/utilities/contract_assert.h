@@ -3,6 +3,7 @@
 
 #include <core/configuration/hardening.h>
 #include <cstdio>
+#include <cstdlib>
 
 // A contract is a formal interface specification for a software
 // component such as a class or member-function. It is a set of
@@ -76,74 +77,118 @@ XSTD_HARDENING_MODE_DEBUG
 // __builtin_trap is a GCC + clang builtin
 #ifndef XSTD_TRAP
 	#if __has_builtin(__builtin_trap) || defined(__GNUC__)
-		#define XSTD_TRAP __builtin_trap()
+		#define XSTD_TRAP() __builtin_trap()
 	#elif defined(_MSC_VER)
 		// __debugbreak() alone doesn't mark the site as noreturn to
 		// the optimizer;
 		// __assume(false) tells MSVC that the control never returns
-		#define XSTD_TRAP (__debugbreak(), __assume(false))
+		#define XSTD_TRAP() (__debugbreak(), __assume(false))
 	#else
-		#define XSTD_TRAP std::abort()
+		#define XSTD_TRAP() std::abort()
 	#endif
 #endif
 
-// Definition of XSTD_TRAP_MSG macro
+namespace xstd {
+
+	struct AssertViolation {
+		const char *expression_; // stringified condition
+		const char *comment_;    // user message
+		const char *file_name_;
+		int line_number_;
+		const char *category_;
+
+		[[nodiscard]] const char *expression() const {
+			return expression_;
+		}
+		[[nodiscard]] const char *file_name() const { return file_name_; }
+
+		[[nodiscard]] const char *comment() const { return comment_; }
+
+		[[nodiscard]] int line_number() const { return line_number_; }
+
+		[[nodiscard]] const char *category() const { return category_; }
+	};
+
+	using ViolationHandler = void (*)(const AssertViolation &);
+
+} // namespace xstd
+
+// Definition of XSTD_TRAP_WITH_MSG macro
 // __builtin_verbose_trap is clang only
 #ifndef XSTD_TRAP_WITH_MSG
-	#if defined(__clang__) && __has_builtin(__builtin_verbose_trap)
-		#if defined(__apple_build_version__) &&                           \
-		    __apple_build_version__ < 17000000
-			#define XSTD_TRAP_WITH_MSG(tag, msg)                          \
-				__builtin_verbose_trap(tag ": " msg)
-		#else
-			#define XSTD_TRAP_WITH_MSG(tag, msg)                          \
-				__builtin_verbose_trap(tag, msg)
+	#if defined(__clang__) && defined(__has_builtin)
+		#if __has_builtin(__builtin_verbose_trap)
+			#if defined(__apple_build_version__) &&                       \
+			    __apple_build_version__ < 17000000
+				#define XSTD_TRAP_WITH_MSG(tag, msg)                      \
+					__builtin_verbose_trap(tag ", " msg)
+			#else
+				#define XSTD_TRAP_WITH_MSG(tag, msg)                      \
+					__builtin_verbose_trap(tag, msg)
+			#endif
 		#endif
 	#else
-		#define XSTD_TRAP_WITH_MSG(tag, msg) XSTD_TRAP
+		#define XSTD_TRAP_WITH_MSG(tag, msg) XSTD_TRAP()
 	#endif
 #endif
 
-void contract_fail_handler(char const *msg) {
-	std::fputs(msg, stderr);
-	std::fputc('\n', stderr);
-	std::fflush(stderr);
-}
-
-#ifndef XSTD_CONTRACT_FAIL_HANDLER
-	#if XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_NONE
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg) ((void)0)
-	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_TRAP
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
-			(std::is_constant_evaluated() ? XSTD_TRAP()                   \
-			                              : XSTD_TRAP_WITH_MSG(tag, msg))
-	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_TRAP
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
-			(std::is_constant_evaluated()                                 \
-			     ? XSTD_TRAP()                                            \
-			     : (contract_fail_handler(loc ": " msg),                  \
-			        XSTD_TRAP_WITH_MSG(tag, msg)))
-	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_ABORT
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
-			(std::is_constant_evaluated() ? XSTD_TRAP() : std::abort())
-	#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_ABORT
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg)                 \
-			(std::is_constant_evaluated()                                 \
-			     ? XSTD_TRAP()                                            \
-			     : (contract_fail_handler(loc ": " msg), std::abort()))
-	#else
-		#define XSTD_CONTRACT_FAIL_HANDLER(tag, loc, msg) ((void)0)
-	#endif
+#ifndef XSTD_STRINGIFY
+	#define XSTD_STRINGIFY_IMPL(x) #x
+	#define XSTD_STRINGIFY(x) XSTD_STRINGIFY_IMPL(x)
 #endif
 
-// Define XSTD_CONTRACT_ASSERT macro
-#ifndef XSTD_CONTRACT_ASSERT
-	#if (XSTD_HARDENING_MODE > XSTD_HARDENING_MODE_NONE) &&               \
-	    (XSTD_ASSERT_MODE > XSTD_ASSERT_MODE_NONE)
-		// TODO : Invoke the contract_fail_handler.
-	#endif
+#define XSTD_VIOLATION(cond, category, msg)                               \
+	::xstd::AssertViolation(#cond, msg, __FILE__, __LINE__, category)
+
+namespace xstd {
+	struct Assert {
+		static void contract_fail_handler_default(
+		    const xstd::AssertViolation &violation) {
+			std::fprintf(stderr,
+			             "%s:%d: contract violation: %s\n",
+			             violation.file_name(),
+			             violation.line_number(),
+			             violation.comment());
+			std::fflush(stderr);
+		}
+
+		static void set_contract_fail_handler(ViolationHandler handler) {
+			violationHandler = handler;
+		}
+
+		static void
+		contract_fail_handler(const AssertViolation &violation) {
+			(*violationHandler)(violation);
+		}
+
+	private:
+		static inline ViolationHandler violationHandler{
+		    &contract_fail_handler_default};
+	};
+} // namespace xstd
+
+#if XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_NONE
+	#define XSTD_CONTRACT_ASSERT(cond, category, msg) ((void)0)
+#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_TRAP
+	#define XSTD_ON_FAILURE(cond, category, msg) XSTD_TRAP()
+#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_TRAP
+// TODO : Implement LOG_TRAP case
+//	#define XSTD_ON_FAILURE(cond, category, msg)                          \
+//(::xstd::Assert::contract_fail_handler()XSTD_VIOLATION(cond, category,
+// msg),
+// XSTD_TRAP_WITH_MSG(#cond, __FILE__
+//                   ":" XSTD_STRINGIFY(__LINE__) ": " msg category))
+#elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_ABORT
+	#define XSTD_ON_FAILURE(cond, category, msg) std::abort()
+#elif XSTD_ASSERT_MODE == XSTD_ASSER_MODE_LOG_ABORT
+	#define XSTD_ON_FAILURE(cond, category, msg) std::abort()
 #endif
 
-// TODO: Add support for users to inject their own contract assertion
-// failure handler.
+#if XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_NONE
+	#define XSTD_CONTRACT_ASSERT(cond, category, msg) ((void)0)
+#else
+	#define XSTD_CONTRACT_ASSERT(cond, category, msg)                     \
+		((cond) ? (void)0 : XSTD_ON_FAILURE(cond, category, msg))
+#endif
+
 #endif
