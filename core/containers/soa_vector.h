@@ -105,8 +105,11 @@ namespace qc {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + n <= capacity(),
 			                                   "The container must have sufficient back spare capacity");
 			XSTD_RECORD_OLD_VALUE(old_size, size());
-			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n")
-
+			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n");
+			for (auto i{size() - n}; i < size(); ++i) {
+				XSTD_CONTRACT_POSTCONDITION(this[i] == value,
+				                            "The element stored at [i] must equal user-supplied value");
+			}
 			auto [... mems] = value;
 			auto [... ptrs] = pointers_;
 			auto end = std::make_tuple((ptrs + begin_offset_ + size_)...);
