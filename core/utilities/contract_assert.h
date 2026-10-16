@@ -4,6 +4,7 @@
 #include <core/configuration/hardening.h>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 
 // A contract is a formal interface specification for a software
 // component such as a class or member-function. It is a set of
@@ -256,6 +257,40 @@ namespace xstd {
 		XSTD_CONTRACT_ASSERT(expression, "argument-within-domain", message)
 	#define XSTD_ASSERT_PEDANTIC(expression, message) XSTD_CONTRACT_ASSERT(expression, "pedantic", message)
 	#define XSTD_ASSERT_UNCATEGORIZED(expression, message) XSTD_CONTRACT_ASSERT(expression, "uncategorized", message)
+#endif
+
+// Concat macro.
+// ## is the token-pasting operator. It joins the tokens on either side
+// into a single new token.
+#define XSTD_CONCAT_IMPL(a, b) a##b
+#define XSTD_CONCAT(a, b) XSTD_CONCAT_IMPL(a, b)
+
+namespace xstd {
+	// This scope guard is an RAII wrapper.
+	template <typename Func> struct PostConditionScopeGuard {
+		Func func_;
+		int exceptions_;
+
+		explicit PostConditionScopeGuard(Func &&func) : func_(func), exceptions_{std::uncaught_exceptions()} {}
+
+		~PostConditionScopeGuard() {
+			if (std::uncaught_exceptions() == exceptions_)
+				func_();
+		}
+	};
+} // namespace xstd
+
+#if XSTD_HARDENING_MODE == XSTD_HARDENING_MODE_DEBUG
+	#define XSTD_RECORD_OLD_VALUE(expression, var_name) const auto var_name = (expression)
+	#define XSTD_CONTRACT_POSTCONDITION(expression, msg)
+::xstd::PostConditionScopeGuard XSTD_CONCAT(_xstd_postcondition_, __LINE__) {
+	[&] {
+		XSTD_CONTRACT_ASSERT(expression, "post-condition", message);
+	}
+}
+#else
+	#define XSTD_RECORD_OLD_VALUE(expression, var_name) ((void)0)
+	#define XSTD_CONTRACT_POSTCONDITION(expression, msg) ((void)0)
 #endif
 
 #endif
