@@ -172,14 +172,18 @@ namespace xstd {
 #elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_TRAP
 	#define XSTD_ON_FAILURE(cond, category, msg) XSTD_TRAP()
 #elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_LOG_TRAP
-// TODO : Implement LOG_TRAP case
-//	#define XSTD_ON_FAILURE(cond, category, msg)                          \
-//(::xstd::Assert::contract_fail_handler()XSTD_VIOLATION(cond, category,
-// msg),
-// XSTD_TRAP_WITH_MSG(#cond, __FILE__
-//                   ":" XSTD_STRINGIFY(__LINE__) ": " msg category))
+  // TODO : Implement LOG_TRAP case
+	#define XSTD_ON_FAILURE(cond, category, msg)                          \
+		(::xstd::Assert::contract_fail_handler(                           \
+		     XSTD_VIOLATION(cond, category, msg)),                        \
+		 XSTD_TRAP_WITH_MSG(                                              \
+		     #cond,                                                       \
+		     __FILE__ ":" XSTD_STRINGIFY(__LINE__) ": " msg category))
 #elif XSTD_ASSERT_MODE == XSTD_ASSERT_MODE_ABORT
-	#define XSTD_ON_FAILURE(cond, category, msg) std::abort()
+	#define XSTD_ON_FAILURE(cond, category, msg)                          \
+		(::xstd::Assert::contract_fail_handler(                           \
+		     XSTD_VIOLATION(cond, category, msg)),                        \
+		 std::abort())
 #elif XSTD_ASSERT_MODE == XSTD_ASSER_MODE_LOG_ABORT
 	#define XSTD_ON_FAILURE(cond, category, msg) std::abort()
 #endif
