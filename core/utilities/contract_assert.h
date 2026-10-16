@@ -281,9 +281,9 @@ namespace xstd {
 } // namespace xstd
 
 #if XSTD_HARDENING_MODE == XSTD_HARDENING_MODE_DEBUG
-	#define XSTD_RECORD_OLD_VALUE(expression, var_name) const auto var_name = (expression)
+	#define XSTD_RECORD_OLD_VALUE(var_name, expression) const auto var_name = (expression)
 	#define XSTD_CONTRACT_POSTCONDITION(expression, msg)
-::xstd::PostConditionScopeGuard XSTD_CONCAT(_xstd_postcondition_, __LINE__) {
+::xstd::PostConditionScopeGuard XSTD_CONCAT(_xstd_postcondition_, __COUNTER__) {
 	[&] {
 		XSTD_CONTRACT_ASSERT(expression, "post-condition", message);
 	}

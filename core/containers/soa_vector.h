@@ -104,6 +104,9 @@ namespace qc {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(n > 0, "The number of objects to construct n, must satisfy n > 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + n <= capacity(),
 			                                   "The container must have sufficient back spare capacity");
+			XSTD_RECORD_OLD_VALUE(old_size, size());
+			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n")
+
 			auto [... mems] = value;
 			auto [... ptrs] = pointers_;
 			auto end = std::make_tuple((ptrs + begin_offset_ + size_)...);
