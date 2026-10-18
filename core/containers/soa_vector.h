@@ -31,13 +31,17 @@ namespace qc {
 
 	template <typename T, typename Alloc = std::allocator<T>> struct soa_split_buffer;
 
-	template <typename T, typename Alloc, typename Pointers> struct ConstructionTransaction {
-		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Pointers pos, Pointers end)
-		    : parent_{parent}, pos_{pos}, end_{end} {}
+	template <typename T, typename Alloc, typename Iterator> struct ConstructionTransaction {
+		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Iterator pos, Iterator end);
 
+		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Iterator pos, size_t n);
+
+		~ConstructionTransaction();
 		soa_split_buffer<T, Alloc> *parent_;
-		Pointers pos_;
-		Pointers end_;
+		Iterator pos_;
+		const Iterator end_;
+
+		friend class soa_split_buffer<T, Alloc>;
 	};
 
 	/// A soa_split_buffer is a contigous array data structure. It may hold
@@ -91,6 +95,8 @@ namespace qc {
 					[:identifier_of(member):] = v.[:identifier_of(member):];
 				}
 			}
+
+			References *operator->() { return this; }
 		};
 #endif
 
@@ -189,8 +195,12 @@ namespace qc {
 			References *operator->() {
 				auto [... ptrs] = ptrs_;
 				References ref = References((*ptrs)...);
-				References *ref_ptr = &ref;
-				return ref_ptr;
+				return ref;
+			}
+
+			iterator operator=(iterator &rhs) {
+				ptrs_ = rhs.ptrs_;
+				return *this;
 			}
 
 			Pointers ptrs_;
@@ -244,6 +254,8 @@ namespace qc {
 
 		constexpr void set_sentinel(size_type size) { size_ = size; }
 
+		constexpr void set_sentinel(iterator new_end) { end() = new_end; }
+
 		constexpr size_t get_data() { return begin_offset_; }
 
 		constexpr void set_data(size_t new_begin_offset_) { begin_offset_ = new_begin_offset_; }
@@ -264,33 +276,45 @@ namespace qc {
 			                                   "The container must have sufficient back spare capacity");
 			XSTD_RECORD_OLD_VALUE(old_size, size());
 			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n");
-			for (auto i{size() - n}; i < size(); ++i) {
-				XSTD_CONTRACT_POSTCONDITION(this[i] == value,
-				                            "The element stored at [i] must equal user-supplied value");
-			}
-			auto [... mems] = value;
-			auto [... ptrs] = pointers_;
-			auto end = std::make_tuple((ptrs + begin_offset_ + size_)...);
-			ConstructionTransaction txn(this, end, n);
+
+			ConstructionTransaction txn(this, end(), n);
 		}
 
 		/// KJ: Implement code that allocates, push_back a few elements
 		/// so we are able to start testing the soa_vector at the earliest.
 		///
 	};
-	/// sizeof(T) * capacity
-	template <typename T, typename Alloc = std::allocator<T>> class soa_vector {
 
-		constexpr void grow() {
-			// 1. allocate new storage
-			// constexpr size_t growth_factor = 2;
-			// size_t new_capacity = growth_factor * m_capacity;
+	template <typename T, typename Alloc, typename Iterator>
+	ConstructionTransaction<T, Alloc, Iterator>::ConstructionTransaction(soa_split_buffer<T, Alloc> *parent,
+	                                                                     Iterator pos, Iterator end)
+	    : parent_{parent}, pos_{pos}, end_{end} {
+	}
 
-			// 2. copy/move into the new storage
-			// 3. deallocate the old storage
-		}
+	template <typename T, typename Alloc, typename Iterator>
+	ConstructionTransaction<T, Alloc, Iterator>::ConstructionTransaction(soa_split_buffer<T, Alloc> *parent,
+	                                                                     Iterator pos, size_t n)
+	    : parent_{parent}, pos_{pos}, end_{pos + n} {
+	}
 
-	private:
-		soa_split_buffer<T> buffer_{};
-	};
+	template <typename T, typename Alloc, typename Iterator>
+	ConstructionTransaction<T, Alloc, Iterator>::~ConstructionTransaction() {
+		parent_->set_sentinel(pos_);
+	}
+};
+/// sizeof(T) * capacity
+template <typename T, typename Alloc = std::allocator<T>> class soa_vector {
+
+	constexpr void grow() {
+		// 1. allocate new storage
+		// constexpr size_t growth_factor = 2;
+		// size_t new_capacity = growth_factor * m_capacity;
+
+		// 2. copy/move into the new storage
+		// 3. deallocate the old storage
+	}
+
+private:
+	soa_split_buffer<T> buffer_{};
+};
 } // namespace qc
