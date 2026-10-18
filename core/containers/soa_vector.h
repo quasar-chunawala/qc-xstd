@@ -67,7 +67,7 @@ namespace qc {
 
 		struct Pointers;
 		struct ReferencesBase;
-        struct References;
+		struct References;
 
 #if __cpp_impl_reflection
 		consteval {
@@ -85,16 +85,15 @@ namespace qc {
 		static constexpr auto ptr_members = define_static_array(utils::nsdms(^^pointers));
 		static constexpr auto members = define_static_array(utils::get_members_by_size<T>());
 
-        struct References : ReferencesBase {
-            auto operator=(const T& v){
-                template for(constexpr auto member : members){
-                    [: identifier_of(member):] = v.[: identifier_of(member):]; 
-                }
-            }            
-        };
+		struct References : ReferencesBase {
+			auto operator=(const T &v) {
+				template for (constexpr auto member : members) {
+					[:identifier_of(member):] = v.[:identifier_of(member):];
+				}
+			}
+		};
 #endif
 
-		
 		size_t begin_offset_{0};
 		size_t size_{0};
 		size_t capacity_{0};
@@ -180,21 +179,19 @@ namespace qc {
 				return std::get<0>(result);
 			}
 
-            References operator*(){
-                auto [... ptrs] = ptrs_;
-                return References((*ptrs)...);
-            }
+			References operator*() {
+				auto [... ptrs] = ptrs_;
+				return References((*ptrs)...);
+			}
 
-            References operator[](size_t idx){
-                return References(*(this + idx));
-            }
+			References operator[](size_t idx) { return References(*(this + idx)); }
 
-            References* operator->(){
-                auto [... ptrs] = ptrs_;
-                References ref = References((*ptrs)...);
-                References* ref_ptr = &ref;
-                return ref_ptr;
-            }            
+			References *operator->() {
+				auto [... ptrs] = ptrs_;
+				References ref = References((*ptrs)...);
+				References *ref_ptr = &ref;
+				return ref_ptr;
+			}
 
 			Pointers ptrs_;
 		};
@@ -207,6 +204,20 @@ namespace qc {
 		constexpr iterator end() {
 			iterator front_cap(pointers_);
 			return front_cap + begin_offset_ + size_;
+		}
+
+		template <typename FieldType> constexpr auto get_field_span() {
+			auto [... ptrs] = pointers_;
+			auto tuple_pointers = std::make_tuple(ptrs...);
+			FieldType *front_cap_ptr = std::get<FieldType>(tuple_pointers);
+			return std::span(front_cap_ptr + begin_offset_, size_);
+		}
+
+		template <size_t N> constexpr auto get_field_span() {
+			auto [... ptrs] = pointers_;
+			auto tuple_pointers = std::make_tuple(ptrs...);
+			auto *front_cap_ptr = std::get<N>(tuple_pointers);
+			return std::span(front_cap_ptr + begin_offset_, size_);
 		}
 
 		constexpr size_t size() { return size_; }
