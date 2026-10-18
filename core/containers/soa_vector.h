@@ -8,7 +8,7 @@
 #include <core/utilities/contract_assert.h>
 
 // Godbolt: https://godbolt.org/z/MsrYY1Ysb
-namespace qc {
+namespace xstd {
 	namespace utils {
 #if __cpp_impl_reflection
 		consteval auto nsdms_of(std::meta::info type) {
@@ -301,20 +301,20 @@ namespace qc {
 	ConstructionTransaction<T, Alloc, Iterator>::~ConstructionTransaction() {
 		parent_->set_sentinel(pos_);
 	}
-};
-/// sizeof(T) * capacity
-template <typename T, typename Alloc = std::allocator<T>> class soa_vector {
 
-	constexpr void grow() {
-		// 1. allocate new storage
-		// constexpr size_t growth_factor = 2;
-		// size_t new_capacity = growth_factor * m_capacity;
+	/// sizeof(T) * capacity
+	template <typename T, typename Alloc = std::allocator<T>> class soa_vector {
 
-		// 2. copy/move into the new storage
-		// 3. deallocate the old storage
-	}
+		constexpr void grow() {
+			// 1. allocate new storage
+			// constexpr size_t growth_factor = 2;
+			// size_t new_capacity = growth_factor * m_capacity;
 
-private:
-	soa_split_buffer<T> buffer_{};
-};
-} // namespace qc
+			// 2. copy/move into the new storage
+			// 3. deallocate the old storage
+		}
+
+	private:
+		soa_split_buffer<T, Alloc> buffer_{};
+	};
+}; // namespace xstd
