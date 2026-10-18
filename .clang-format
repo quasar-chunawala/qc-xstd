@@ -1,3 +1,4 @@
+BasedOnStyle: LLVM
 AllowShortLoopsOnASingleLine: false
 AllowShortEnumsOnASingleLine: true
 AlignArrayOfStructures: Left

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <meta>
 #include <print>
@@ -6,28 +7,37 @@
 
 #include <core/utilities/contract_assert.h>
 
+// Godbolt: https://godbolt.org/z/MsrYY1Ysb
 namespace qc {
 	namespace utils {
 #if __cpp_impl_reflection
-		consteval auto nsdms(std::meta::info type) {
+		consteval auto nsdms_of(std::meta::info type) {
 			return nonstatic_data_members_of(type, std::meta::access_context::current());
 		}
 
 		template <typename T> consteval auto get_members_by_size() {
-			auto data_members = nsdms(^^T);
+			auto data_members = nsdms_of(^^T);
 			std::ranges::sort(data_members.begin(), data_members.end(), [](std::meta::info m1, std::meta::info m2) {
 				return size_of(type_of(m1)) > size_of(type_of(m2));
 			});
 			return data_members;
 		}
 #endif
+		template <typename P> consteval auto tuple_type_of() {
+			auto [... ptrs] = P{};
+			return std::type_identity<std::tuple<decltype(ptrs)...>>{};
+		}
 	} // namespace utils
 
-	template <typename T> struct soa_split_buffer;
+	template <typename T, typename Alloc = std::allocator<T>> struct soa_split_buffer;
 
-	template <typename T> struct construct_transaction {
-	private:
-		soa_split_buffer<T> *parent;
+	template <typename T, typename Alloc, typename Pointers> struct ConstructionTransaction {
+		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Pointers pos, Pointers end)
+		    : parent_{parent}, pos_{pos}, end_{end} {}
+
+		soa_split_buffer<T, Alloc> *parent_;
+		Pointers pos_;
+		Pointers end_;
 	};
 
 	/// A soa_split_buffer is a contigous array data structure. It may hold
@@ -48,39 +58,160 @@ namespace qc {
 	/// back_cap_1
 	///                              front_cap_1
 
-	template <typename T> struct soa_split_buffer {
+	template <typename T, typename Allocator> struct soa_split_buffer {
 		using value_type = T;
 		using size_type = size_t;
 		using reference = T &;
 		using const_reference = const T &;
 		using pointer = T *;
 
-		struct pointers;
+		struct Pointers;
+		struct ReferencesBase;
+        struct References;
+
 #if __cpp_impl_reflection
 		consteval {
 			auto data_members = std::define_static_array(utils::get_members_by_size<T>());
-			define_aggregate(^^pointers, data_members | std::views::transform([](std::meta::info member) {
+			define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 				                             return data_member_spec(add_pointer(type_of(member)),
 				                                                     {.name = identifier_of(member)});
 			                             }));
+			define_aggregate(^^ReferencesBase, data_members | std::views::transform([](std::meta::info member) {
+				                                   return data_member_spec(add_lvalue_reference(type_of(member)),
+				                                                           {.name = identifier_of(member)});
+			                                   }));
 		}
+
+		static constexpr auto ptr_members = define_static_array(utils::nsdms(^^pointers));
+		static constexpr auto members = define_static_array(utils::get_members_by_size<T>());
+
+        struct References : ReferencesBase {
+            auto operator=(const T& v){
+                template for(constexpr auto member : members){
+                    [: identifier_of(member):] = v.[: identifier_of(member):]; 
+                }
+            }            
+        };
 #endif
+
+		
 		size_t begin_offset_{0};
 		size_t size_{0};
 		size_t capacity_{0};
-		pointers pointers_{};
+		Pointers pointers_{};
 
-		constexpr auto begin() {
-			auto [... ptr] = pointers_;
-			return std::make_tuple((ptr + begin_offset_)...);
+#if __cpp_impl_reflection
+		using tuple_pointers_t = [:std::meta::substitute(^^std::tuple, ptr_members |
+		                                                                   std::views::transform(std::meta::type_of) |
+		                                                                   std::ranges::to<std::vector>()):];
+		using tuple_members_t = [:std::meta::substitute(^^std::tuple, utils::get_members_by_size<T>() |
+		                                                                  std::views::transform(std::meta::type_of) |
+		                                                                  std::ranges::to<std::vector>()):];
+		using tuple_references_t = [:std::meta::substitute(^^std::tuple,
+		                                                   utils::get_members_by_size<T>() |
+		                                                       std::views::transform(std::meta::type_of) |
+		                                                       std::views::transform(std::meta::add_lvalue_reference) |
+		                                                       std::ranges::to<std::vector>()):];
+#else
+		using tuple_pointers_t = decltype(utils::tuple_type_of<Pointers>());
+		using tuple_members_t = decltype(utils::tuple_type_of<T>());
+#endif
+		struct iterator {
+			using value_type = tuple_members_t;
+
+			iterator operator++() {
+				auto [... ptrs] = ptrs_;
+				return iterator((ptrs + 1)...);
+			}
+
+			iterator operator++(int) {
+				iterator temp = *this;
+				++(*this);
+				return temp;
+			}
+
+			iterator operator--() {
+				auto [... ptrs] = ptrs_;
+				return iterator(ptrs_ - 1);
+			}
+
+			iterator operator--(int) {
+				iterator temp = *this;
+				--(*this);
+				return temp;
+			}
+
+			iterator operator+(std::ptrdiff_t n) {
+				auto [... ptrs] = ptrs_;
+				return iterator((ptrs + n)...);
+			}
+
+			iterator &operator+=(std::ptrdiff_t n) {
+				auto [... ptrs] = ptrs_;
+				*this = iterator((ptrs + n)...);
+				return *this;
+			}
+
+			iterator operator-(std::ptrdiff_t n) {
+				auto [... ptrs] = ptrs_;
+				return iterator((ptrs - n)...);
+			}
+
+			iterator &operator-=(std::ptrdiff_t n) {
+				auto [... ptrs] = ptrs_;
+				*this = iterator((ptrs - n)...);
+				return *this;
+			}
+
+			friend iterator operator+(std::ptrdiff_t n, const iterator &rhs) {
+				iterator temp = rhs;
+				return temp + n;
+			}
+
+			friend iterator operator-(std::ptrdiff_t n, const iterator &rhs) {
+				iterator temp = rhs;
+				return temp - n;
+			}
+
+			std::ptrdiff_t operator-(const iterator &rhs) {
+				auto [... ptrs1] = ptrs_;
+				auto [... ptrs2] = rhs.ptrs_;
+				auto result = std::tie((ptrs1 - ptrs2)...);
+				return std::get<0>(result);
+			}
+
+            References operator*(){
+                auto [... ptrs] = ptrs_;
+                return References((*ptrs)...);
+            }
+
+            References operator[](size_t idx){
+                return References(*(this + idx));
+            }
+
+            References* operator->(){
+                auto [... ptrs] = ptrs_;
+                References ref = References((*ptrs)...);
+                References* ref_ptr = &ref;
+                return ref_ptr;
+            }            
+
+			Pointers ptrs_;
+		};
+
+		constexpr iterator begin() {
+			iterator front_cap(pointers_);
+			return front_cap + begin_offset_;
 		}
 
-		constexpr auto end() {
-			auto [... ptr] = pointers_;
-			return std::make_tuple((ptr + begin_offset_ + size_)...);
+		constexpr iterator end() {
+			iterator front_cap(pointers_);
+			return front_cap + begin_offset_ + size_;
 		}
 
 		constexpr size_t size() { return size_; }
+
+		constexpr bool empty() { return size_ == 0; }
 
 		constexpr size_t capacity() { return capacity_; }
 
@@ -93,7 +224,18 @@ namespace qc {
 			return std::tie(*(ptr + begin_offset_)...);
 		}
 
+		constexpr size_t get_sentinel() { return size_; }
+
 		constexpr void set_sentinel(size_type size) { size_ = size; }
+
+		constexpr size_t get_data() { return begin_offset_; }
+
+		constexpr void set_data(size_t new_begin_offset_) { begin_offset_ = new_begin_offset_; }
+
+		constexpr size_t set_valid_range(size_t new_begin_offset, size_t new_size) {
+			begin_offset_ = new_begin_offset;
+			size_ = new_size;
+		}
 
 		/// Copy constructs n objects starting at end()
 		/// Pre-condition: n > 0
@@ -113,7 +255,7 @@ namespace qc {
 			auto [... mems] = value;
 			auto [... ptrs] = pointers_;
 			auto end = std::make_tuple((ptrs + begin_offset_ + size_)...);
-			construct_transaction txn(this, end, n);
+			ConstructionTransaction txn(this, end, n);
 		}
 
 		/// KJ: Implement code that allocates, push_back a few elements
