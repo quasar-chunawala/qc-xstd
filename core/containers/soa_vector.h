@@ -230,9 +230,14 @@ namespace qc {
 
 		constexpr size_t back_spare() { return capacity_ - front_spare() - size_; }
 
-		constexpr auto front() {
+		constexpr References front() {
 			auto [... ptr] = pointers_;
-			return std::tie(*(ptr + begin_offset_)...);
+			return References(*(ptr + begin_offset_)...);
+		}
+
+		constexpr References back() {
+			auto [... ptr] = pointers_;
+			return References(*(ptr + begin_offset_ + size_)...);
 		}
 
 		constexpr size_t get_sentinel() { return size_; }
