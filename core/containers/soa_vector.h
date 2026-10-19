@@ -84,7 +84,7 @@ namespace xstd {
 			}
 		} // namespace v1
 
-		using v0::nsdms_of(std::meta::info r_type);
+		using v0::nsdms_of;
 
 		template <typename T> consteval auto get_members_by_size() {
 			auto data_members = nsdms_of(^^T);
