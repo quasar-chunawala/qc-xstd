@@ -41,6 +41,16 @@
 ///
 /// xstd::soa_vector<T> implementation allows users to use [[=skip_flattening]]
 /// annotation to opt-out of SoA for a nested type.
+///
+/// struct Entity
+/// {
+///     struct Physics { Vec2 pos, vel; float torque; };
+///     struct Rendering { Mesh* mesh; Texture* texture; };
+///.
+///.    [[=skip_flatten]]Physics physics_;
+///     [[=skip_flatten]]Rendering rendering_;
+/// };
+
 struct skip_flatten_t {};
 static inline constexpr skip_flatten_t skip_flatten{};
 
