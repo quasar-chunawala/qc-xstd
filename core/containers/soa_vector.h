@@ -45,26 +45,36 @@ struct skip_flatten_t {};
 static inline constexpr skip_flatten_t skip_flatten{};
 
 namespace xstd {
-	namespace utils {
+	namespace soa_utils {
 #if __cpp_impl_reflection
-		consteval void nsdms_of_impl(std::meta::info r_type, std::vector<std::meta::info> &data_members) {
-			auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
-				return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
-			};
-			for (auto mem : nonstatic_data_members_of(r_type, std::meta::access_context::unchecked())) {
-				if (needs_flattening(mem)) {
-					nsdms_of_impl(mem, data_members);
-				} else {
-					data_members.push_back(mem);
+		namespace v0 {
+			consteval auto nsdms_of(std::meta::info r_type) {
+				return nonstatic_data_members_of(r_type, std::meta::access_context::unchecked());
+			}
+		} // namespace v0
+
+		namespace v1 {
+			consteval void nsdms_of_impl(std::meta::info r_type, std::vector<std::meta::info> &data_members) {
+				auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
+					return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
+				};
+				for (auto mem : nonstatic_data_members_of(r_type, std::meta::access_context::unchecked())) {
+					if (needs_flattening(mem)) {
+						nsdms_of_impl(mem, data_members);
+					} else {
+						data_members.push_back(mem);
+					}
 				}
 			}
-		}
 
-		consteval auto nsdms_of(std::meta::info r_type) {
-			std::vector<std::meta::info> data_members{};
-			nsdms_of_impl(r_type, data_members);
-			return data_members;
-		}
+			consteval auto nsdms_of(std::meta::info r_type) {
+				std::vector<std::meta::info> data_members{};
+				nsdms_of_impl(r_type, data_members);
+				return data_members;
+			}
+		} // namespace v1
+
+		using v0::nsdms_of(std::meta::info r_type);
 
 		template <typename T> consteval auto get_members_by_size() {
 			auto data_members = nsdms_of(^^T);
@@ -78,7 +88,7 @@ namespace xstd {
 			auto [... ptrs] = P{};
 			return std::type_identity<std::tuple<decltype(ptrs)...>>{};
 		}
-	} // namespace utils
+	} // namespace soa_utils
 
 	template <typename T, typename Alloc = std::allocator<T>> struct soa_split_buffer;
 
@@ -123,7 +133,7 @@ namespace xstd {
 
 #if __cpp_impl_reflection
 		consteval {
-			auto data_members = std::define_static_array(utils::get_members_by_size<T>());
+			auto data_members = std::define_static_array(soa_utils::get_members_by_size<T>());
 			define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 				                             return data_member_spec(add_pointer(type_of(member)),
 				                                                     {.name = identifier_of(member)});
@@ -134,8 +144,8 @@ namespace xstd {
 			                                   }));
 		}
 
-		static constexpr auto ptr_members = define_static_array(utils::nsdms(^^pointers));
-		static constexpr auto members = define_static_array(utils::get_members_by_size<T>());
+		static constexpr auto ptr_members = define_static_array(soa_utils::nsdms_of(^^pointers));
+		static constexpr auto members = define_static_array(soa_utils::get_members_by_size<T>());
 
 		struct References : ReferencesBase {
 			auto operator=(const T &v) {
@@ -157,17 +167,17 @@ namespace xstd {
 		using tuple_pointers_t = [:std::meta::substitute(^^std::tuple, ptr_members |
 		                                                                   std::views::transform(std::meta::type_of) |
 		                                                                   std::ranges::to<std::vector>()):];
-		using tuple_members_t = [:std::meta::substitute(^^std::tuple, utils::get_members_by_size<T>() |
+		using tuple_members_t = [:std::meta::substitute(^^std::tuple, soa_utils::get_members_by_size<T>() |
 		                                                                  std::views::transform(std::meta::type_of) |
 		                                                                  std::ranges::to<std::vector>()):];
 		using tuple_references_t = [:std::meta::substitute(^^std::tuple,
-		                                                   utils::get_members_by_size<T>() |
+		                                                   soa_utils::get_members_by_size<T>() |
 		                                                       std::views::transform(std::meta::type_of) |
 		                                                       std::views::transform(std::meta::add_lvalue_reference) |
 		                                                       std::ranges::to<std::vector>()):];
 #else
-		using tuple_pointers_t = decltype(utils::tuple_type_of<Pointers>());
-		using tuple_members_t = decltype(utils::tuple_type_of<T>());
+		using tuple_pointers_t = decltype(soa_utils::tuple_type_of<Pointers>());
+		using tuple_members_t = decltype(soa_utils::tuple_type_of<T>());
 #endif
 		struct iterator {
 			using value_type = tuple_members_t;
