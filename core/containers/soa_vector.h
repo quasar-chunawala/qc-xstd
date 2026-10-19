@@ -7,12 +7,63 @@
 
 #include <core/utilities/contract_assert.h>
 
-// Godbolt: https://godbolt.org/z/MsrYY1Ysb
+// Godbolt: https://godbolt.org/z/q9vMqPhfr
+
+/// In real-life applications, such as an Entity-Component System(ECS), we often have aggregates that contain other
+/// aggregate data-members.
+///
+/// Example.
+///
+/// struct Vec2{
+///     double x_;
+///     double y_;
+/// };
+///
+/// struct Circle{
+///     Vec2 position_;
+///     double radius_;
+/// };
+///
+/// For the purposes of gameplay, we may want to update the y-coordinate of 10'000 circles - shift the circles on the
+/// Y-axis. Hence, the nested struct Vec2 should be stored in SoA fashion.
+///
+/// Counter-example.
+/// struct Entity
+/// {
+///     struct Physics { Vec2 pos, vel; float torque; };
+///     struct Rendering { Mesh* mesh; Texture* texture; };
+///.
+///.    Physics physics_;
+///     Rendering rendering_;
+/// };
+///
+/// A common access pattern in ECS is to store Physics and Rendering in AoS fashion, but Entity in SoA fasion.
+///
+/// xstd::soa_vector<T> implementation allows users to use [[=skip_flattening]]
+/// annotation to opt-out of SoA for a nested type.
+struct skip_flatten_t {};
+static inline constexpr skip_flatten_t skip_flatten{};
+
 namespace xstd {
 	namespace utils {
 #if __cpp_impl_reflection
-		consteval auto nsdms_of(std::meta::info type) {
-			return nonstatic_data_members_of(type, std::meta::access_context::current());
+		consteval void nsdms_of_impl(std::meta::info r_type, std::vector<std::meta::info> &data_members) {
+			auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
+				return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
+			};
+			for (auto mem : nonstatic_data_members_of(r_type, std::meta::access_context::unchecked())) {
+				if (needs_flattening(mem)) {
+					nsdms_of_impl(mem, data_members);
+				} else {
+					data_members.push_back(mem);
+				}
+			}
+		}
+
+		consteval auto nsdms_of(std::meta::info r_type) {
+			std::vector<std::meta::info> data_members{};
+			nsdms_of_impl(r_type, data_members);
+			return data_members;
 		}
 
 		template <typename T> consteval auto get_members_by_size() {
@@ -44,15 +95,12 @@ namespace xstd {
 		friend class soa_split_buffer<T, Alloc>;
 	};
 
-	/// A soa_split_buffer is a contigous array data structure. It may hold
-	/// spare capacity at both ends of the buffer. This allows for a
-	/// soa_split_buffer to grow from both the front and the back without
-	/// relocating its contents until it runs out of room.
+	/// A soa_split_buffer is a contigous array data structure. It may hold spare capacity at both ends of the buffer.
+	/// This allows for a soa_split_buffer to grow from both the front and the back without relocating its contents
+	/// until it runs out of room.
 	///
-	/// The contents of the soa_vector are stored in a contigous buffer
-	/// allocated on the heap. The contigous chunk of memory is delimited
-	/// by the following pointers (o indicates uninitialized memory and x
-	/// denotes valid objects).
+	/// The contents of the soa_vector are stored in a contigous buffer allocated on the heap. The contigous chunk of
+	/// memory is delimited by the following pointers (o indicates uninitialized memory and x denotes valid objects).
 	///
 	/// Suppose we have an aggregate type T{m_0, m_1, m_2}.
 	///
