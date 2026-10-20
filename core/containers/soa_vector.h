@@ -7,7 +7,7 @@
 
 #include <core/utilities/contract_assert.h>
 
-// Godbolt: https://godbolt.org/z/q9vMqPhfr
+// Godbolt: https://godbolt.org/z/44zasP8Y5
 
 /// In real-life applications, such as an Entity-Component System(ECS), we often have aggregates that contain other
 /// aggregate data-members.
