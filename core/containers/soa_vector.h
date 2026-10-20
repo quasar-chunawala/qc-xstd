@@ -157,6 +157,9 @@ namespace xstd {
 		static constexpr auto ptr_members = define_static_array(soa_utils::nsdms_of(^^pointers));
 		static constexpr auto members = define_static_array(soa_utils::get_members_by_size<T>());
 
+		/// TODO: Implement References::operator=() in a way that, if the aggregate type T contains
+		/// aggregate members, which are also stored in SoA fashion, we should still be able to
+		/// store it in a References object.
 		struct References : ReferencesBase {
 			auto operator=(const T &v) {
 				template for (constexpr auto member : members) {
