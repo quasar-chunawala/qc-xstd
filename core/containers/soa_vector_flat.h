@@ -28,6 +28,7 @@ namespace xstd {
 
 		template <typename T, typename Alloc = std::allocator<T>> struct soa_split_buffer;
 
+		///
 		template <typename T, typename Alloc, typename Iterator> struct ConstructionTransaction {
 			ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Iterator pos, Iterator end);
 
@@ -163,15 +164,9 @@ namespace xstd {
 					return *this;
 				}
 
-				friend iterator operator+(std::ptrdiff_t n, const iterator &rhs) {
-					iterator temp = rhs;
-					return temp + n;
-				}
+				friend iterator operator+(std::ptrdiff_t n, const iterator &rhs) { return rhs + n; }
 
-				friend iterator operator-(std::ptrdiff_t n, const iterator &rhs) {
-					iterator temp = rhs;
-					return temp - n;
-				}
+				friend iterator operator-(std::ptrdiff_t n, const iterator &rhs) { return rhs - n; }
 
 				std::ptrdiff_t operator-(const iterator &rhs) {
 					auto [... ptrs1] = ptrs_;
@@ -225,15 +220,15 @@ namespace xstd {
 				return std::span(front_cap_ptr + begin_offset_, size_);
 			}
 
-			constexpr size_t size() { return size_; }
+			[[nodiscard]] constexpr size_t size() const { return size_; }
 
-			constexpr bool empty() { return size_ == 0; }
+			[[nodiscard]] constexpr bool empty() const { return size_ == 0; }
 
-			constexpr size_t capacity() { return capacity_; }
+			[[nodiscard]] constexpr size_t capacity() const { return capacity_; }
 
-			constexpr size_t front_spare() { return begin_offset_; }
+			[[nodiscard]] constexpr size_t front_spare() const { return begin_offset_; }
 
-			constexpr size_t back_spare() { return capacity_ - front_spare() - size_; }
+			[[nodiscard]] constexpr size_t back_spare() const { return capacity_ - front_spare() - size_; }
 
 			constexpr References front() {
 				auto [... ptr] = pointers_;
@@ -245,15 +240,15 @@ namespace xstd {
 				return References(*(ptr + begin_offset_ + size_)...);
 			}
 
-			constexpr size_t get_sentinel() { return size_; }
+			[[nodiscard]] constexpr size_t get_sentinel() const { return size_; }
 
 			constexpr void set_sentinel(size_type size) { size_ = size; }
 
 			constexpr void set_sentinel(iterator new_end) { end() = new_end; }
 
-			constexpr size_t get_data() { return begin_offset_; }
+			constexpr size_t get_data() const { return begin_offset_; }
 
-			constexpr void set_data(size_t new_begin_offset_) { begin_offset_ = new_begin_offset_; }
+			constexpr void set_data(size_t new_begin_offset_) const { begin_offset_ = new_begin_offset_; }
 
 			constexpr size_t set_valid_range(size_t new_begin_offset, size_t new_size) {
 				begin_offset_ = new_begin_offset;
@@ -274,10 +269,6 @@ namespace xstd {
 
 				ConstructionTransaction txn(this, end(), n);
 			}
-
-			/// KJ: Implement code that allocates, push_back a few elements
-			/// so we are able to start testing the soa_vector at the earliest.
-			///
 		};
 
 		template <typename T, typename Alloc, typename Iterator>
@@ -296,8 +287,6 @@ namespace xstd {
 		ConstructionTransaction<T, Alloc, Iterator>::~ConstructionTransaction() {
 			parent_->set_sentinel(pos_);
 		}
-
-		/// sizeof(T) * capacity
 
 	} // namespace flat_internal
 
