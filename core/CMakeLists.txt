@@ -29,7 +29,6 @@ set(CORE_HEADERS
     "${XSTD_CORE_ROOT}/configuration/hardening.h"
     "${XSTD_CORE_ROOT}/containers/forward_list.h"
     "${XSTD_CORE_ROOT}/containers/vector.h"
-    "${XSTD_CORE_ROOT}/containers/soa_vector.h"
     "${XSTD_CORE_ROOT}/lock_free/spsc_queue.h"
     "${XSTD_CORE_ROOT}/smart_pointers/shared_ptr.h"
     "${XSTD_CORE_ROOT}/smart_pointers/unique_ptr.h"
@@ -46,7 +45,10 @@ set(CORE_HEADERS
 # Reflections are supported on GCC 16 and above. 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 16)
     set(CPP26_REFLECTIONS_SUPPORTED 1)
-    list(APPEND CORE_HEADERS "${XSTD_CORE_ROOT}/containers/soa_vector.h")
+    list(APPEND CORE_HEADERS
+        "${XSTD_CORE_ROOT}/containers/soa_vector_flat.h"
+        "${XSTD_CORE_ROOT}/containers/soa_vector_recursive.h"
+    )
 endif()
 
 # libxstd is a header-only library
