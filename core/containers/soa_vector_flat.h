@@ -85,10 +85,11 @@ namespace xstd {
 			static constexpr auto members = define_static_array(soa_utils::get_all_fields(^^T));
 
 			struct References : ReferencesBase {
-				auto operator=(const T &v) {
+				References &operator=(const T &v) {
 					template for (constexpr auto member : members) {
 						[:identifier_of(member):] = v.[:identifier_of(member):];
 					}
+					return *this;
 				}
 
 				References *operator->() { return this; }
