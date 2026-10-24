@@ -61,22 +61,23 @@ namespace xstd {
 	namespace rec_internal {
 		namespace soa_utils {
 #if __cpp_impl_reflection
-			consteval void nsdms_of_impl(std::meta::info r_type, std::vector<std::meta::info> &data_members) {
+			consteval void get_all_fields_impl(std::meta::info reflected_type,
+			                                   std::vector<std::meta::info> &data_members) {
 				auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
 					return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
 				};
-				for (auto mem : nonstatic_data_members_of(r_type, std::meta::access_context::unchecked())) {
+				for (auto mem : nonstatic_data_members_of(reflected_type, std::meta::access_context::unchecked())) {
 					if (needs_flattening(mem)) {
-						nsdms_of_impl(mem, data_members);
+						get_all_fields_impl(mem, data_members);
 					} else {
 						data_members.push_back(mem);
 					}
 				}
 			}
 
-			consteval auto nsdms_of(std::meta::info r_type) {
+			consteval auto get_all_fields(std::meta::info reflected_type) {
 				std::vector<std::meta::info> data_members{};
-				nsdms_of_impl(r_type, data_members);
+				get_all_fields_impl(reflected_type, data_members);
 				return data_members;
 			}
 
@@ -142,7 +143,7 @@ namespace xstd {
 				                                   }));
 			}
 
-			static constexpr auto ptr_members = define_static_array(soa_utils::nsdms_of(^^pointers));
+			static constexpr auto ptr_members = define_static_array(soa_utils::get_all_fields(^^pointers));
 			static constexpr auto members = define_static_array(soa_utils::get_members_by_size<T>());
 
 			/// TODO: Implement References::operator=() in a way that, if the aggregate type T contains

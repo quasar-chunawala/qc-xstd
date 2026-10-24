@@ -13,8 +13,8 @@ namespace xstd {
 	namespace flat_internal {
 		namespace soa_utils {
 #if __cpp_impl_reflection
-			consteval auto nsdms_of(std::meta::info r_type) {
-				return nonstatic_data_members_of(r_type, std::meta::access_context::unchecked());
+			consteval auto get_all_fields(std::meta::info reflected_type) {
+				return nonstatic_data_members_of(reflected_type, std::meta::access_context::unchecked());
 			}
 #endif
 			template <typename P> consteval auto tuple_type_of() {
@@ -67,7 +67,7 @@ namespace xstd {
 
 #if __cpp_impl_reflection
 			consteval {
-				auto data_members = std::define_static_array(soa_utils::nsdms_of(^^T));
+				auto data_members = std::define_static_array(soa_utils::get_all_fields(^^T));
 				define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 					                             return data_member_spec(add_pointer(type_of(member)),
 					                                                     {.name = identifier_of(member)});
@@ -78,8 +78,8 @@ namespace xstd {
 				                                   }));
 			}
 
-			static constexpr auto ptr_members = define_static_array(soa_utils::nsdms_of(^^pointers));
-			static constexpr auto members = define_static_array(soa_utils::nsdms_of(^^T));
+			static constexpr auto ptr_members = define_static_array(soa_utils::get_all_fields(^^pointers));
+			static constexpr auto members = define_static_array(soa_utils::get_all_fields(^^T));
 
 			struct References : ReferencesBase {
 				auto operator=(const T &v) {
