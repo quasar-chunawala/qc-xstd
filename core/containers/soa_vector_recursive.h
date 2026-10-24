@@ -63,8 +63,8 @@ namespace xstd {
 #if __cpp_impl_reflection
 			consteval void get_all_fields_impl(std::meta::info reflected_type,
 			                                   std::vector<std::meta::info> &data_members) {
-				auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
-					return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
+				auto needs_flattening = [](std::meta::info reflected_member) consteval -> bool {
+					return std::meta::annotations_of_with_type(reflected_member, ^^skip_flatten_t).empty();
 				};
 				for (auto mem : nonstatic_data_members_of(reflected_type, std::meta::access_context::unchecked())) {
 					if (needs_flattening(mem)) {

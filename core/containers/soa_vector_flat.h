@@ -9,6 +9,9 @@
 
 // Godbolt: https://compiler-explorer.com/z/Kaq1aT9TE
 
+/// soa_vector_flat
+///
+
 namespace xstd {
 	namespace flat_internal {
 		namespace soa_utils {
