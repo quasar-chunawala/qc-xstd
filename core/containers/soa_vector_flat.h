@@ -42,21 +42,22 @@ namespace xstd {
 			friend class soa_split_buffer<T, Alloc>;
 		};
 
-		/// A soa_split_buffer is a contigous array data structure. It may hold spare capacity at both ends of the
-		/// buffer. This allows for a soa_split_buffer to grow from both the front and the back without relocating its
+		/// @brief A contiguous structure-of-arrays buffer with spare capacity at both ends.
+		///
+		/// A soa_split_buffer is a contiguous array data structure. It may hold spare capacity at both ends of the
+		/// buffer. This allows a soa_split_buffer to grow from both the front and the back without relocating its
 		/// contents until it runs out of room.
 		///
-		/// The contents of the soa_vector are stored in a contigous buffer allocated on the heap. The contigous chunk
-		/// of memory is delimited by the following pointers (o indicates uninitialized memory and x denotes valid
-		/// objects).
+		/// The contents of the soa_split_buffer are stored in a contiguous buffer allocated on the heap. For an
+		/// aggregate type `T{m_0, m_1, m_2}`, each member is stored in its own sub-array, delimited by the pointers
+		/// shown below (`o` marks uninitialized memory and `x` marks valid objects).
 		///
-		/// Suppose we have an aggregate type T{m_0, m_1, m_2}.
-		///
+		/// @verbatim
 		/// |ooooooooooooooxxxxxxxxooooooo|ooooooooooooxxxxxxxxxxxxxxxoooooooooooo|
-		///  ^             ^       ^       ^           ^             ^ ^
-		/// front_cap_0  begin_0  end_0  back_cap_0    begin_1       end_1
-		/// back_cap_1
-		///                              front_cap_1
+		///  ^             ^       ^       ^           ^              ^           ^
+		///  front_cap_0   |       end_0   |           begin_1        |           back_cap_1
+		///                begin_0         back_cap_0 = front_cap_1   end_1
+		/// @endverbatim
 
 		template <typename T, typename Allocator> struct soa_split_buffer {
 			using value_type = T;
