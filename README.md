@@ -1,4 +1,10 @@
 # `qc::xstd`
+
+[![Linux x86 build](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/linux.yml/badge.svg?branch=main)](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/linux.yml)
+[![MacOS build](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/macos.yml/badge.svg?branch=main)](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/macos.yml)
+[![Win32/64 build](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/windows.yml/badge.svg?branch=main)](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/windows.yml)
+[![C++20/23/26 versions compatibility build](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/cxx-versions.yml/badge.svg?branch=main)](https://github.com/quasar-chunawala/qc-xstd/actions/workflows/cxx-versions.yml)
+
 A collection of standard containers, RAII wrappers for modern C++ and used in quantitative trading and finance.
 
 ## Configure and Build
@@ -24,11 +30,11 @@ cmake --build --preset <preset-name>
 
 ## Compatibility
 
-- **Language Standard**: C++23
+- **Language Standard**: C++20
   - *Note*: `std::meta` requires C++26.
 - **Compilers Tested**: 
-  - Clang 22
-  - GCC 15, 16.2
+  - Clang 18, 19, 20, 21, 22
+  - GCC 12, 13, 14, 15, 16.2
   - MSVC 17(VS 2022), 18(2026)
   
 
