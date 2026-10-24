@@ -42,6 +42,7 @@ set(XSTD_TESTS_SOURCES
     "${XSTD_TESTS_ROOT}/contract_assert_test/contract_assert_test.cpp"
     "${XSTD_TESTS_ROOT}/forward_list_test/forward_list_test.cpp"
     "${XSTD_TESTS_ROOT}/shared_ptr_test/shared_ptr_test.cpp"
+    "${XSTD_TESTS_ROOT}/soa_split_buffer_test/soa_split_buffer_test.cpp"
     "${XSTD_TESTS_ROOT}/spsc_queue_test/spsc_queue_test.cpp"
     "${XSTD_TESTS_ROOT}/string_test/string_test.cpp"
     "${XSTD_TESTS_ROOT}/threadsafe_queue_test/threadsafe_queue_test.cpp"

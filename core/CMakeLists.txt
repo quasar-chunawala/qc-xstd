@@ -46,6 +46,8 @@ set(CORE_HEADERS
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 16)
     set(CPP26_REFLECTIONS_SUPPORTED 1)
     list(APPEND CORE_HEADERS
+        "${XSTD_CORE_ROOT}/containers/construction_transaction.h"
+        "${XSTD_CORE_ROOT}/containers/soa_split_buffer.h"
         "${XSTD_CORE_ROOT}/containers/soa_vector_flat.h"
         "${XSTD_CORE_ROOT}/containers/soa_vector_recursive.h"
     )
@@ -62,6 +64,7 @@ target_sources(libxstd
         FILES ${CORE_HEADERS}
 )
 
+set_target_properties(libxstd PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
 
 target_compile_features(libxstd INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 if(MSVC)
