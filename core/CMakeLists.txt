@@ -46,6 +46,7 @@ set(CORE_HEADERS
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 16)
     set(CPP26_REFLECTIONS_SUPPORTED 1)
     list(APPEND CORE_HEADERS
+        "${XSTD_CORE_ROOT}/containers/soa_utils.h"
         "${XSTD_CORE_ROOT}/containers/construction_transaction.h"
         "${XSTD_CORE_ROOT}/containers/soa_split_buffer.h"
         "${XSTD_CORE_ROOT}/containers/soa_vector_flat.h"

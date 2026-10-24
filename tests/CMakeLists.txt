@@ -42,7 +42,6 @@ set(XSTD_TESTS_SOURCES
     "${XSTD_TESTS_ROOT}/contract_assert_test/contract_assert_test.cpp"
     "${XSTD_TESTS_ROOT}/forward_list_test/forward_list_test.cpp"
     "${XSTD_TESTS_ROOT}/shared_ptr_test/shared_ptr_test.cpp"
-    "${XSTD_TESTS_ROOT}/soa_split_buffer_test/soa_split_buffer_test.cpp"
     "${XSTD_TESTS_ROOT}/spsc_queue_test/spsc_queue_test.cpp"
     "${XSTD_TESTS_ROOT}/string_test/string_test.cpp"
     "${XSTD_TESTS_ROOT}/threadsafe_queue_test/threadsafe_queue_test.cpp"
@@ -51,6 +50,14 @@ set(XSTD_TESTS_SOURCES
     "${XSTD_TESTS_ROOT}/variant_test/variant_test.cpp"
     "${XSTD_TESTS_ROOT}/vector_test/vector_test.cpp"
 )
+
+# Reflections are supported on GCC 16 and above. 
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 16)
+    set(CPP26_REFLECTIONS_SUPPORTED 1)
+    list(APPEND XSTD_TESTS_SOURCES
+        "${XSTD_TESTS_ROOT}/soa_split_buffer_test/soa_split_buffer_test.cpp"
+    )
+endif()
 
 add_executable(xstd_tests)
 
