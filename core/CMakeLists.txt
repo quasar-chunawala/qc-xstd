@@ -15,7 +15,7 @@ message(STATUS "Version: ${version}")
 if(${compiler} STREQUAL "GCC" AND ${version} VERSION_GREATER_EQUAL 16)
   set(XSTD_CXX_STANDARD 26)
 else()
-  set(XSTD_CXX_STANDARD 23)
+  set(XSTD_CXX_STANDARD 20)
 endif()
 
 set(CMAKE_CXX_STANDARD ${XSTD_CXX_STANDARD})              # C++ standard

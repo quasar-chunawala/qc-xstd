@@ -15,10 +15,11 @@ jobs:
                     - { compiler: 'gcc', version: '13', flags: '-std=c++20 -Wall -Wpedantic'}
                     - { compiler: 'gcc', version: '14', flags: '-std=c++20 -Wall -Wpedantic'} 
                     - { compiler: 'gcc', version: '15', flags: '-std=c++20 -Wall -Wpedantic'}
-                    - { compiler: 'clang', version: '17', flags: '-std=c++20 -Wall -Wpedantic'} 
+                    - { compiler: 'gcc', version: '16', flags: '-std=c++26 -Wall -Wpedantic -freflection'}
                     - { compiler: 'clang', version: '18', flags: '-std=c++20 -Wall -Wpedantic'}        
                     - { compiler: 'clang', version: '19', flags: '-std=c++20 -Wall -Wpedantic'}
                     - { compiler: 'clang', version: '20', flags: '-std=c++20 -Wall -Wpedantic'}
+                    - { compiler: 'clang', version: '21', flags: '-std=c++20 -Wall -Wpedantic'}
 
         steps:
         - name: Checkout
