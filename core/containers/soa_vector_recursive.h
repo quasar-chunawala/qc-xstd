@@ -9,6 +9,9 @@
 
 // Godbolt: https://godbolt.org/z/44zasP8Y5
 
+/// soa_vector_recursive<T>
+/// -----------------------
+
 /// In real-life applications, such as an Entity-Component System(ECS), we often have aggregates that contain other
 /// aggregate data-members.
 ///
@@ -77,13 +80,6 @@ namespace xstd {
 				return data_members;
 			}
 
-			template <typename T> consteval auto get_members_by_size() {
-				auto data_members = nsdms_of(^^T);
-				std::ranges::sort(data_members.begin(), data_members.end(), [](std::meta::info m1, std::meta::info m2) {
-					return size_of(type_of(m1)) > size_of(type_of(m2));
-				});
-				return data_members;
-			}
 #endif
 			template <typename P> consteval auto tuple_type_of() {
 				auto [... ptrs] = P{};

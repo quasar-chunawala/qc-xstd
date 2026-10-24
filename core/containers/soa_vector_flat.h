@@ -7,47 +7,14 @@
 
 #include <core/utilities/contract_assert.h>
 
-// Godbolt: https://godbolt.org/z/44zasP8Y5
+// Godbolt: https://compiler-explorer.com/z/Kaq1aT9TE
 
 namespace xstd {
 	namespace flat_internal {
 		namespace soa_utils {
 #if __cpp_impl_reflection
-			namespace v0 {
-				consteval auto nsdms_of(std::meta::info r_type) {
-					return nonstatic_data_members_of(r_type, std::meta::access_context::unchecked());
-				}
-			} // namespace v0
-
-			namespace v1 {
-				consteval void nsdms_of_impl(std::meta::info r_type, std::vector<std::meta::info> &data_members) {
-					auto needs_flattening = [](std::meta::info r_member) consteval -> bool {
-						return std::meta::annotations_of_with_type(r_member, ^^skip_flatten_t).empty();
-					};
-					for (auto mem : nonstatic_data_members_of(r_type, std::meta::access_context::unchecked())) {
-						if (needs_flattening(mem)) {
-							nsdms_of_impl(mem, data_members);
-						} else {
-							data_members.push_back(mem);
-						}
-					}
-				}
-
-				consteval auto nsdms_of(std::meta::info r_type) {
-					std::vector<std::meta::info> data_members{};
-					nsdms_of_impl(r_type, data_members);
-					return data_members;
-				}
-			} // namespace v1
-
-			using v0::nsdms_of;
-
-			template <typename T> consteval auto get_members_by_size() {
-				auto data_members = nsdms_of(^^T);
-				std::ranges::sort(data_members.begin(), data_members.end(), [](std::meta::info m1, std::meta::info m2) {
-					return size_of(type_of(m1)) > size_of(type_of(m2));
-				});
-				return data_members;
+			consteval auto nsdms_of(std::meta::info r_type) {
+				return nonstatic_data_members_of(r_type, std::meta::access_context::unchecked());
 			}
 #endif
 			template <typename P> consteval auto tuple_type_of() {
@@ -100,7 +67,7 @@ namespace xstd {
 
 #if __cpp_impl_reflection
 			consteval {
-				auto data_members = std::define_static_array(soa_utils::get_members_by_size<T>());
+				auto data_members = std::define_static_array(soa_utils::nsdms_of(^^T));
 				define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 					                             return data_member_spec(add_pointer(type_of(member)),
 					                                                     {.name = identifier_of(member)});
@@ -112,11 +79,8 @@ namespace xstd {
 			}
 
 			static constexpr auto ptr_members = define_static_array(soa_utils::nsdms_of(^^pointers));
-			static constexpr auto members = define_static_array(soa_utils::get_members_by_size<T>());
+			static constexpr auto members = define_static_array(soa_utils::nsdms_of(^^T));
 
-			/// TODO: Implement References::operator=() in a way that, if the aggregate type T contains
-			/// aggregate members, which are also stored in SoA fashion, we should still be able to
-			/// store it in a References object.
 			struct References : ReferencesBase {
 				auto operator=(const T &v) {
 					template for (constexpr auto member : members) {
@@ -138,12 +102,10 @@ namespace xstd {
 			                                                 ptr_members | std::views::transform(std::meta::type_of) |
 			                                                     std::ranges::to<std::vector>()):];
 			using tuple_members_t = [:std::meta::substitute(^^std::tuple,
-			                                                soa_utils::get_members_by_size<T>() |
-			                                                    std::views::transform(std::meta::type_of) |
+			                                                members | std::views::transform(std::meta::type_of) |
 			                                                    std::ranges::to<std::vector>()):];
 			using tuple_references_t = [:std::meta::substitute(
-			                                 ^^std::tuple, soa_utils::get_members_by_size<T>() |
-			                                                   std::views::transform(std::meta::type_of) |
+			                                 ^^std::tuple, members | std::views::transform(std::meta::type_of) |
 			                                                   std::views::transform(std::meta::add_lvalue_reference) |
 			                                                   std::ranges::to<std::vector>()):];
 #else
