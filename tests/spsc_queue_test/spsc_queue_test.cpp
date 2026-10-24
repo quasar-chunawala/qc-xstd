@@ -3,7 +3,7 @@
 #include <core/lock_free/spsc_queue.h>
 
 TEST(SPSCQueueTest, PushAndPop) {
-	dev::spsc_queue<int, 6> queue; // Create a queue with capacity 8
+	xstd::spsc_queue<int, 6> queue; // Create a queue with capacity 8
 
 	// Push elements onto the queue
 	for (int i{0}; i < 7; ++i) {

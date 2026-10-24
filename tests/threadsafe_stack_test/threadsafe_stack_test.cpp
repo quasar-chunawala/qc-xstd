@@ -7,13 +7,13 @@
 #include <core/concurrency/threadsafe_stack.h>
 
 TEST(ThreadSafeStackTest, PushAndTopTest) {
-	dev::threadsafe_stack<int> stack;
+	xstd::threadsafe_stack<int> stack;
 	stack.push(42);
 	EXPECT_EQ(stack.top(), 42);
 }
 
 TEST(ThreadSafeStackTest, PopTest) {
-	dev::threadsafe_stack<int> stack;
+	xstd::threadsafe_stack<int> stack;
 	stack.push(42);
 	auto popped = stack.pop();
 	EXPECT_TRUE(popped.has_value());
@@ -22,14 +22,14 @@ TEST(ThreadSafeStackTest, PopTest) {
 }
 
 TEST(ThreadSafeStackTest, EmptyTest) {
-	dev::threadsafe_stack<int> stack;
+	xstd::threadsafe_stack<int> stack;
 	EXPECT_TRUE(stack.empty());
 	stack.push(42);
 	EXPECT_FALSE(stack.empty());
 }
 
 TEST(ThreadSafeStackTest, ConcurrentPushTest) {
-	dev::threadsafe_stack<int> stack;
+	xstd::threadsafe_stack<int> stack;
 	std::vector<std::thread> threads;
 
 	for (int i = 0; i < 10; ++i) {
@@ -45,7 +45,7 @@ TEST(ThreadSafeStackTest, ConcurrentPushTest) {
 }
 
 TEST(ThreadSafeStackTest, ConcurrentPopTest) {
-	dev::threadsafe_stack<int> stack;
+	xstd::threadsafe_stack<int> stack;
 	for (int i = 0; i < 10; ++i) {
 		stack.push(i);
 	}
@@ -72,15 +72,15 @@ TEST(ThreadSafeStackTest, ConcurrentPopTest) {
 }
 
 TEST(ThreadSafeStackTest, ConcurrentSwapTest) {
-	dev::threadsafe_stack<int> evens, odds;
+	xstd::threadsafe_stack<int> evens, odds;
 	for (int i{0}; i < 5; ++i)
 		evens.push(2 * i);
 
 	for (int i{0}; i < 5; ++i)
 		odds.push(2 * i + 1);
 
-	dev::threadsafe_stack<int> evensCopy{evens};
-	dev::threadsafe_stack<int> oddsCopy{odds};
+	xstd::threadsafe_stack<int> evensCopy{evens};
+	xstd::threadsafe_stack<int> oddsCopy{odds};
 
 	std::vector<std::thread> threads;
 

@@ -3,7 +3,7 @@
 #include <shared_mutex>
 #include <stack>
 
-namespace dev {
+namespace xstd {
 	template <typename T> class threadsafe_stack {
 	private:
 		std::stack<T> m_stack;
@@ -19,8 +19,7 @@ namespace dev {
 
 		// copy constructor
 		threadsafe_stack(const threadsafe_stack &other) {
-			std::shared_lock<std::shared_mutex> shared_lck(
-			    (other.m_shared_mutex));
+			std::shared_lock<std::shared_mutex> shared_lck((other.m_shared_mutex));
 			m_stack = other.m_stack;
 		}
 
@@ -70,22 +69,17 @@ namespace dev {
 		}
 
 		void swap(threadsafe_stack &other) {
-			std::scoped_lock<std::shared_mutex, std::shared_mutex>
-			    scoped_lck(m_shared_mutex, other.m_shared_mutex);
+			std::scoped_lock<std::shared_mutex, std::shared_mutex> scoped_lck(m_shared_mutex, other.m_shared_mutex);
 			std::swap(m_stack, other.m_stack);
 		}
 
-		friend void swap(threadsafe_stack &lhs, threadsafe_stack &rhs) {
-			lhs.swap(rhs);
-		}
+		friend void swap(threadsafe_stack &lhs, threadsafe_stack &rhs) { lhs.swap(rhs); }
 
-		friend bool operator==(threadsafe_stack &lhs,
-		                       threadsafe_stack &rhs) {
-			std::scoped_lock<std::shared_mutex, std::shared_mutex>
-			    scoped_lck(lhs.m_shared_mutex, rhs.m_shared_mutex);
+		friend bool operator==(threadsafe_stack &lhs, threadsafe_stack &rhs) {
+			std::scoped_lock<std::shared_mutex, std::shared_mutex> scoped_lck(lhs.m_shared_mutex, rhs.m_shared_mutex);
 			if (lhs.m_stack.size() != rhs.m_stack.size())
 				return false;
 			return lhs.m_stack == rhs.m_stack;
 		}
 	};
-} // namespace dev
+} // namespace xstd

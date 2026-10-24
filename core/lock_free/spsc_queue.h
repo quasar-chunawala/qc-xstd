@@ -4,11 +4,10 @@
 #include <optional>
 #include <type_traits>
 
-namespace dev {
+namespace xstd {
 
 	template <typename T>
-	concept Queueable =
-	    std::default_initializable<T> && std::move_constructible<T>;
+	concept Queueable = std::default_initializable<T> && std::move_constructible<T>;
 
 	/**
 	 * @brief The `spsc_queue` class provides a single-reader,
@@ -40,16 +39,12 @@ namespace dev {
 		template <typename U>
 		requires std::is_convertible_v<U, T>
 		bool try_push(U &&element) {
-			const std::size_t write_index =
-			    m_write_index.load(std::memory_order_relaxed);
-			const std::size_t next_write_index =
-			    (write_index + 1) & (m_capacity - 1);
+			const std::size_t write_index = m_write_index.load(std::memory_order_relaxed);
+			const std::size_t next_write_index = (write_index + 1) & (m_capacity - 1);
 
-			if (next_write_index !=
-			    m_read_index.load(std::memory_order_acquire)) {
+			if (next_write_index != m_read_index.load(std::memory_order_acquire)) {
 				m_buffer[write_index] = std::forward<U>(element);
-				m_write_index.store(next_write_index,
-				                    std::memory_order_release);
+				m_write_index.store(next_write_index, std::memory_order_release);
 				return true;
 			}
 			return false;
@@ -57,17 +52,14 @@ namespace dev {
 
 		std::optional<T> try_pop() {
 			std::optional<T> result{std::nullopt};
-			const std::size_t read_index =
-			    m_read_index.load(std::memory_order_relaxed);
+			const std::size_t read_index = m_read_index.load(std::memory_order_relaxed);
 
-			if (read_index ==
-			    m_write_index.load(std::memory_order_acquire))
+			if (read_index == m_write_index.load(std::memory_order_acquire))
 				return result;
 
 			result = std::move(m_buffer[read_index]);
-			m_read_index.store((read_index + 1) & (m_capacity - 1),
-			                   std::memory_order_release);
+			m_read_index.store((read_index + 1) & (m_capacity - 1), std::memory_order_release);
 			return result;
 		}
 	};
-} // namespace dev
+} // namespace xstd

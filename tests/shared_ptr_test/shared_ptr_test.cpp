@@ -18,7 +18,7 @@ TEST(SharedPtrTest, MakeSharedTest) {
 		~Point2D() = default;
 	};
 
-	dev::shared_ptr<Point2D> sptr = dev::make_shared<Point2D>(3.0, 5.0);
+	xstd::shared_ptr<Point2D> sptr = xstd::make_shared<Point2D>(3.0, 5.0);
 	EXPECT_NE(sptr, nullptr);
 	EXPECT_EQ(sptr->x, 3.0);
 	EXPECT_EQ(sptr->y, 5.0);
@@ -35,7 +35,7 @@ TEST(SharedPtrTest, ResetSharedPtr) {
 		int n;
 	};
 
-	dev::shared_ptr<X> sptr(new X(100));
+	xstd::shared_ptr<X> sptr(new X(100));
 	EXPECT_NE(sptr, nullptr);
 	EXPECT_EQ(sptr.use_count(), 1);
 	EXPECT_EQ(sptr->get_n(), 100);
@@ -57,9 +57,9 @@ TEST(SharedPtrTest, ResetSharedPtrMultipleOwnership) {
 		int n;
 	};
 
-	dev::shared_ptr<X> sptr1(new X(100));
-	dev::shared_ptr sptr2 = sptr1;
-	dev::shared_ptr sptr3 = sptr2;
+	xstd::shared_ptr<X> sptr1(new X(100));
+	xstd::shared_ptr sptr2 = sptr1;
+	xstd::shared_ptr sptr3 = sptr2;
 
 	EXPECT_EQ(sptr1->get_n(), 100);
 	EXPECT_EQ(sptr2->get_n(), 100);
@@ -86,9 +86,9 @@ TEST(SharedPtrTest, ResetArrayVersion) {
 	b[1] = 5;
 	b[2] = 6;
 
-	dev::shared_ptr<int[]> sptr1(a);
-	dev::shared_ptr<int[]> sptr2(sptr1);
-	dev::shared_ptr<int[]> sptr3(sptr2);
+	xstd::shared_ptr<int[]> sptr1(a);
+	xstd::shared_ptr<int[]> sptr2(sptr1);
+	xstd::shared_ptr<int[]> sptr3(sptr2);
 
 	EXPECT_EQ(sptr1.use_count(), 3);
 	EXPECT_EQ(sptr1[0], 1);
@@ -109,7 +109,7 @@ TEST(SharedPtrTest, ResetArrayVersion) {
 
 TEST(SharedPtrTest, ParametrizedCTorTestScalarVersion) {
 	auto ptr = new int(17);
-	dev::shared_ptr<int> s_ptr{ptr};
+	xstd::shared_ptr<int> s_ptr{ptr};
 	EXPECT_EQ(*s_ptr, 17);
 	EXPECT_NE(s_ptr.get(), nullptr);
 	EXPECT_EQ(s_ptr.get(), ptr);
@@ -120,7 +120,7 @@ TEST(SharedPtrTest, ParametrizedCTorTestArrayVersion) {
 	for (int i{0}; i < 10; ++i) {
 		ptr[i] = i + 1;
 	}
-	dev::shared_ptr<int[]> s_ptr(ptr);
+	xstd::shared_ptr<int[]> s_ptr(ptr);
 	EXPECT_NE(s_ptr, nullptr);
 	EXPECT_EQ(s_ptr.get(), ptr);
 	for (int i{0}; i < 10; ++i) {
@@ -132,15 +132,15 @@ TEST(SharedPtrTest, ParametrizedCTorTestArrayVersion) {
 TEST(SharedPtrTest, RefCountingTest) {
 	int *raw_ptr = new int(42);
 	{
-		dev::shared_ptr<int> ptr1{raw_ptr};
+		xstd::shared_ptr<int> ptr1{raw_ptr};
 		EXPECT_EQ(ptr1.use_count(), 1);
 		EXPECT_EQ(ptr1.get(), raw_ptr);
 		{
-			dev::shared_ptr ptr2 = ptr1;
+			xstd::shared_ptr ptr2 = ptr1;
 			EXPECT_EQ(ptr1.use_count(), 2);
 			EXPECT_EQ(ptr1.get(), raw_ptr);
 			{
-				dev::shared_ptr ptr3 = ptr2;
+				xstd::shared_ptr ptr3 = ptr2;
 				EXPECT_EQ(ptr1.use_count(), 3);
 				EXPECT_EQ(ptr1.get(), raw_ptr);
 			}
@@ -155,15 +155,15 @@ TEST(SharedPtrTest, RefCountingTest) {
 TEST(SharedPtrTest, RefCountingTestArrayVersion) {
 	int *raw_ptr = new int[5];
 	{
-		dev::shared_ptr<int[]> ptr1{raw_ptr};
+		xstd::shared_ptr<int[]> ptr1{raw_ptr};
 		EXPECT_EQ(ptr1.use_count(), 1);
 		EXPECT_EQ(ptr1.get(), raw_ptr);
 		{
-			dev::shared_ptr ptr2 = ptr1;
+			xstd::shared_ptr ptr2 = ptr1;
 			EXPECT_EQ(ptr1.use_count(), 2);
 			EXPECT_EQ(ptr1.get(), raw_ptr);
 			{
-				dev::shared_ptr ptr3 = ptr2;
+				xstd::shared_ptr ptr3 = ptr2;
 				EXPECT_EQ(ptr1.use_count(), 3);
 				EXPECT_EQ(ptr1.get(), raw_ptr);
 			}
@@ -177,12 +177,12 @@ TEST(SharedPtrTest, RefCountingTestArrayVersion) {
 
 TEST(SharedPtrTest, MultithreadedConstructionAndDestructionTest) {
 	using namespace std::chrono_literals;
-	dev::shared_ptr ptr{new int(42)};
+	xstd::shared_ptr ptr{new int(42)};
 	std::atomic<bool> go{false};
 	EXPECT_EQ(ptr.use_count() == 1, true);
 
 	std::thread t1([&] {
-		dev::shared_ptr<int> ptr1 = ptr;
+		xstd::shared_ptr<int> ptr1 = ptr;
 		while (!go.load())
 			;
 		std::cout << "\nRef Count = " << ptr.use_count();
@@ -190,7 +190,7 @@ TEST(SharedPtrTest, MultithreadedConstructionAndDestructionTest) {
 	});
 
 	std::thread t2([&] {
-		dev::shared_ptr<int> ptr2 = ptr;
+		xstd::shared_ptr<int> ptr2 = ptr;
 		while (!go.load())
 			;
 		std::cout << "\nRef Count = " << ptr.use_count();
@@ -207,9 +207,9 @@ TEST(SharedPtrTest, MultithreadedConstructionAndDestructionTest) {
 TEST(SharedPtrTest, CopyConstructorTest) {
 	/* Copy constructor */
 	int *raw_ptr = new int(42);
-	dev::shared_ptr<int> p1(raw_ptr);
+	xstd::shared_ptr<int> p1(raw_ptr);
 
-	dev::shared_ptr<int> p2 = p1;
+	xstd::shared_ptr<int> p2 = p1;
 	EXPECT_EQ(p1.get(), raw_ptr);
 	EXPECT_EQ(p2, p1);
 	EXPECT_EQ(*p2, 42);
@@ -223,9 +223,9 @@ TEST(SharedPtrTest, CopyConstructorTestArrayVersion) {
 	raw_ptr[1] = 5;
 	raw_ptr[2] = 17;
 
-	dev::shared_ptr<int[]> p1(raw_ptr);
+	xstd::shared_ptr<int[]> p1(raw_ptr);
 
-	dev::shared_ptr p2{p1};
+	xstd::shared_ptr p2{p1};
 	EXPECT_EQ(p1.get(), raw_ptr);
 	EXPECT_EQ(p2, p1);
 	EXPECT_EQ(p2.get(), raw_ptr);
@@ -238,9 +238,9 @@ TEST(SharedPtrTest, CopyConstructorTestArrayVersion) {
 TEST(SharedPtrTest, MoveConstructorTest) {
 	/* Move constructor*/
 	auto raw_ptr = new int(28);
-	dev::shared_ptr<int> p1(raw_ptr);
-	dev::shared_ptr<int> p2 = std::move(p1);
-	dev::shared_ptr<int> p3 = std::move(p2);
+	xstd::shared_ptr<int> p1(raw_ptr);
+	xstd::shared_ptr<int> p2 = std::move(p1);
+	xstd::shared_ptr<int> p3 = std::move(p2);
 	EXPECT_EQ(p1.get(), nullptr);
 	EXPECT_EQ(p1.use_count(), 0);
 	EXPECT_EQ(p2.get(), nullptr);
@@ -253,8 +253,8 @@ TEST(SharedPtrTest, MoveConstructorTest) {
 
 TEST(SharedPtrTest, CopyAssignmentTest) {
 	/* Copy Assignment */
-	dev::shared_ptr<double> p1(new double(2.71828));
-	dev::shared_ptr<double> p2(new double(3.14159));
+	xstd::shared_ptr<double> p1(new double(2.71828));
+	xstd::shared_ptr<double> p2(new double(3.14159));
 
 	EXPECT_EQ(*p2 == 3.14159, true);
 	p2 = p1;
@@ -264,8 +264,8 @@ TEST(SharedPtrTest, CopyAssignmentTest) {
 
 TEST(SharedPtrTest, MoveAssignmentTest) {
 	/* Move Assignment */
-	dev::shared_ptr<int> p1(new int(42));
-	dev::shared_ptr<int> p2(new int(28));
+	xstd::shared_ptr<int> p1(new int(42));
+	xstd::shared_ptr<int> p2(new int(28));
 	p2 = std::move(p1);
 	EXPECT_EQ(p2.get() != nullptr, true);
 	EXPECT_EQ(*p2 == 42, true);
@@ -276,8 +276,8 @@ TEST(SharedPtrTest, SwapTest) {
 	int *first = new int(42);
 	int *second = new int(17);
 
-	dev::shared_ptr<int> p1(first);
-	dev::shared_ptr<int> p2(second);
+	xstd::shared_ptr<int> p1(first);
+	xstd::shared_ptr<int> p2(second);
 
 	swap(p1, p2);
 
@@ -289,7 +289,7 @@ TEST(SharedPtrTest, SwapTest) {
 /* get() : Returns a pointer to the managed object or nullptr*/
 TEST(SharedPtrTest, GetTest) {
 	double *resource = new double(0.50);
-	dev::shared_ptr p(resource);
+	xstd::shared_ptr p(resource);
 
 	EXPECT_EQ(p.get() == resource, true);
 	EXPECT_EQ(*(p.get()) == 0.50, true);
@@ -308,7 +308,7 @@ TEST(SharedPtrTest, IndirectionOperatorTest) {
 		int foo() { return _n; }
 	};
 
-	dev::shared_ptr<X> ptr(new X(10));
+	xstd::shared_ptr<X> ptr(new X(10));
 	EXPECT_EQ((*ptr)._n == 10, true);
 	EXPECT_EQ(ptr->foo() == 10, true);
 }
@@ -331,11 +331,10 @@ TEST(SharedPtrTest, CustomDeleterTest) {
 	};
 
 	{
-		dev::shared_ptr<Point2D> ptr1(new Point2D(3.0, 5.0),
-		                              custom_deleter);
+		xstd::shared_ptr<Point2D> ptr1(new Point2D(3.0, 5.0), custom_deleter);
 		EXPECT_EQ(ptr1.use_count(), 1);
 		{
-			dev::shared_ptr<Point2D> ptr2 = ptr1;
+			xstd::shared_ptr<Point2D> ptr2 = ptr1;
 			EXPECT_EQ(ptr2.use_count(), 2);
 		}
 

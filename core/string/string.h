@@ -6,7 +6,7 @@
 #include <initializer_list>
 #include <iterator>
 
-namespace dev {
+namespace xstd {
 
 	struct string_long {
 		char *m_buffer_ptr; // 8 bytes
@@ -71,15 +71,13 @@ namespace dev {
 		string(string &&other);
 
 		// construct from an arbitrary range [first, last)
-		template <typename InputIt>
-		string(InputIt first, InputIt last) : string() {
+		template <typename InputIt> string(InputIt first, InputIt last) : string() {
 			for (auto it{first}; it != last; ++it)
 				push_back(*it);
 		}
 
 		// construct from an initializer list
-		string(std::initializer_list<char> list)
-		    : string{list.begin(), list.end()} {}
+		string(std::initializer_list<char> list) : string{list.begin(), list.end()} {}
 
 		// construct count copies of character ch
 		string(size_t count, char ch);
@@ -122,8 +120,7 @@ namespace dev {
 		void pop_back();
 
 		// insert range [first, last) before pos
-		template <typename InputIt>
-		void insert(const_iterator pos, InputIt first, InputIt last) {
+		template <typename InputIt> void insert(const_iterator pos, InputIt first, InputIt last) {
 			auto pos_ = const_cast<iterator>(pos);
 			auto first_ = first;
 			auto last_ = last;
@@ -135,8 +132,7 @@ namespace dev {
 
 				// handle self-referential insertion
 				string temp;
-				if (first_ >= begin() && first_ < end() &&
-				    last_ > begin() && last_ <= end()) {
+				if (first_ >= begin() && first_ < end() && last_ > begin() && last_ <= end()) {
 					for (auto it{first_}; it != last_; ++it)
 						temp.push_back(*it);
 					first_ = temp.begin();
@@ -144,8 +140,7 @@ namespace dev {
 				}
 
 				if (n > remaining_capacity) {
-					size_t excess_capacity_reqd = std::max(
-					    static_cast<int>(n - remaining_capacity), 0);
+					size_t excess_capacity_reqd = std::max(static_cast<int>(n - remaining_capacity), 0);
 					reserve(capacity() + excess_capacity_reqd);
 					pos_ = std::next(begin(), offset);
 				}
@@ -167,9 +162,9 @@ namespace dev {
 		iterator erase(const_iterator first, const_iterator last);
 	};
 
-} // namespace dev
+} // namespace xstd
 
-namespace dev {
+namespace xstd {
 
 	// ============================================================
 	// SSO flag helpers
@@ -302,8 +297,7 @@ namespace dev {
 			set_short_size(len);
 			m_data.s.m_buffer[len] = '\0';
 		} else {
-			m_data.l.m_buffer_ptr =
-			    allocate_helper(other.m_data.l.m_capacity);
+			m_data.l.m_buffer_ptr = allocate_helper(other.m_data.l.m_capacity);
 			size_t len = other.get_long_size();
 			for (size_t i{0}; i < len; ++i)
 				m_data.l.m_buffer_ptr[i] = other[i];
@@ -323,13 +317,10 @@ namespace dev {
 			other.m_data.s.m_buffer[0] = '\0';
 			other.set_short_size(0);
 		} else {
-			m_data.l.m_buffer_ptr =
-			    std::exchange(other.m_data.l.m_buffer_ptr, nullptr);
+			m_data.l.m_buffer_ptr = std::exchange(other.m_data.l.m_buffer_ptr, nullptr);
 			m_data.l.m_size = std::exchange(other.m_data.l.m_size, 0);
-			m_data.l.m_capacity =
-			    std::exchange(other.m_data.l.m_capacity, 0);
-			m_data.l.m_buffer_ptr[other.m_data.l.m_size] =
-			    '\0'; // size already 0 after exchange
+			m_data.l.m_capacity = std::exchange(other.m_data.l.m_capacity, 0);
+			m_data.l.m_buffer_ptr[other.m_data.l.m_size] = '\0'; // size already 0 after exchange
 			// Re-null-terminate using the captured length
 			size_t len = m_data.l.m_size;
 			m_data.l.m_buffer_ptr[len] = '\0';
@@ -397,8 +388,7 @@ namespace dev {
 	}
 
 	size_t string::capacity() {
-		return is_short_string() ? get_short_capacity() - 1
-		                         : get_long_capacity() - 1;
+		return is_short_string() ? get_short_capacity() - 1 : get_long_capacity() - 1;
 	}
 
 	bool string::empty() {
@@ -409,13 +399,11 @@ namespace dev {
 		size_t current_capacity = capacity();
 		size_t current_size = size();
 
-		if (new_capacity <= current_capacity ||
-		    new_capacity < string_short::capacity)
+		if (new_capacity <= current_capacity || new_capacity < string_short::capacity)
 			return;
 
 		++new_capacity;
-		new_capacity =
-		    !(new_capacity & 0x01) ? new_capacity : new_capacity + 1;
+		new_capacity = !(new_capacity & 0x01) ? new_capacity : new_capacity + 1;
 
 		char *mem = allocate_helper(new_capacity);
 		char *buffer_ptr = data();
@@ -436,12 +424,10 @@ namespace dev {
 	// ============================================================
 
 	char *string::data() {
-		return is_short_string() ? &m_data.s.m_buffer[0]
-		                         : m_data.l.m_buffer_ptr;
+		return is_short_string() ? &m_data.s.m_buffer[0] : m_data.l.m_buffer_ptr;
 	}
 	const char *string::data() const {
-		return is_short_string() ? &m_data.s.m_buffer[0]
-		                         : m_data.l.m_buffer_ptr;
+		return is_short_string() ? &m_data.s.m_buffer[0] : m_data.l.m_buffer_ptr;
 	}
 
 	char &string::operator[](size_t pos) {
@@ -503,8 +489,7 @@ namespace dev {
 		data()[new_size] = '\0';
 	}
 
-	string::iterator string::erase(const_iterator first,
-	                               const_iterator last) {
+	string::iterator string::erase(const_iterator first, const_iterator last) {
 		iterator first_ = const_cast<iterator>(first);
 		iterator last_ = const_cast<iterator>(last);
 		size_t offset = std::distance(begin(), first_);
@@ -516,8 +501,7 @@ namespace dev {
 
 		char *buffer_ptr = begin();
 		for (size_t i{0}; i < num_chars_to_shift_left; ++i)
-			buffer_ptr[offset + i] =
-			    buffer_ptr[offset + i + num_chars_erased];
+			buffer_ptr[offset + i] = buffer_ptr[offset + i + num_chars_erased];
 
 		set_size(size() - num_chars_erased);
 		buffer_ptr[size()] = '\0';
@@ -528,5 +512,4 @@ namespace dev {
 		return buffer_ptr + offset;
 	}
 
-} // namespace dev
-
+} // namespace xstd

@@ -1,6 +1,6 @@
 #include <memory>
 #include <print>
 
-namespace dev {
+namespace xstd {
 	struct hive {};
-} // namespace dev
+} // namespace xstd

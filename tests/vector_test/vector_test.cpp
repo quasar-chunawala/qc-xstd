@@ -60,7 +60,7 @@ struct ThrowOnCopyConstruct {
 };
 
 TEST(VectorTest, DefaultConstructorTest) {
-	dev::vector<int> v;
+	xstd::vector<int> v;
 	EXPECT_EQ(v.empty(), true);
 }
 
@@ -70,15 +70,14 @@ TEST(VectorTest, ThrowDuringDefaultConstructionTest) {
 	EXPECT_EQ(ThrowOnValueConstruct::deallocation_count, 0);
 	ThrowOnValueConstruct::throw_after_ = 2;
 
-	EXPECT_THROW(
-	    { dev::vector<ThrowOnValueConstruct> v(5); }, std::runtime_error);
+	EXPECT_THROW({ xstd::vector<ThrowOnValueConstruct> v(5); }, std::runtime_error);
 
 	EXPECT_EQ(ThrowOnValueConstruct::default_construct_count_, 2);
 	EXPECT_EQ(ThrowOnValueConstruct::deallocation_count, 2);
 }
 
 TEST(VectorTest, InitializerListTest) {
-	dev::vector<int> v{1, 2, 3, 4, 5};
+	xstd::vector<int> v{1, 2, 3, 4, 5};
 	EXPECT_EQ(!v.empty(), true);
 	EXPECT_EQ(v.size(), 5);
 	EXPECT_TRUE(v.capacity() > 0);
@@ -93,11 +92,11 @@ TEST(VectorTest, ThrowDuringInitializerListCtorTest) {
 
 	EXPECT_THROW(
 	    {
-		    dev::vector<ThrowOnCopyConstruct> v({ThrowOnCopyConstruct(),
-		                                         ThrowOnCopyConstruct(),
-		                                         ThrowOnCopyConstruct(),
-		                                         ThrowOnCopyConstruct(),
-		                                         ThrowOnCopyConstruct()});
+		    xstd::vector<ThrowOnCopyConstruct> v({ThrowOnCopyConstruct(),
+		                                          ThrowOnCopyConstruct(),
+		                                          ThrowOnCopyConstruct(),
+		                                          ThrowOnCopyConstruct(),
+		                                          ThrowOnCopyConstruct()});
 	    },
 	    std::runtime_error);
 
@@ -107,7 +106,7 @@ TEST(VectorTest, ThrowDuringInitializerListCtorTest) {
 }
 
 TEST(VectorTest, ParameterizedConstructorTest) {
-	dev::vector v(10, 5.5);
+	xstd::vector v(10, 5.5);
 	EXPECT_EQ(v.size(), 10);
 	for (size_t i{0}; i < v.size(); ++i) {
 		EXPECT_EQ(v[i], 5.5);
@@ -118,12 +117,7 @@ TEST(VectorTest, ThrowDuringFillDataTest) {
 	ThrowOnCopyConstruct::reset();
 	ThrowOnCopyConstruct::throw_after_ = 2;
 
-	EXPECT_THROW(
-	    {
-		    dev::vector<ThrowOnCopyConstruct> v(10,
-		                                        ThrowOnCopyConstruct());
-	    },
-	    std::runtime_error);
+	EXPECT_THROW({ xstd::vector<ThrowOnCopyConstruct> v(10, ThrowOnCopyConstruct()); }, std::runtime_error);
 
 	EXPECT_EQ(ThrowOnCopyConstruct::default_construct_count_, 1);
 	EXPECT_EQ(ThrowOnCopyConstruct::copy_construct_count_, 2);
@@ -131,8 +125,8 @@ TEST(VectorTest, ThrowDuringFillDataTest) {
 }
 
 TEST(VectorTest, CopyConstructorTest) {
-	dev::vector v1{1.0, 2.0, 3.0, 4.0, 5.0};
-	dev::vector v2(v1);
+	xstd::vector v1{1.0, 2.0, 3.0, 4.0, 5.0};
+	xstd::vector v2(v1);
 
 	EXPECT_EQ(v1.size() == v2.size(), true);
 
@@ -148,18 +142,17 @@ TEST(VectorTest, ThrowDuringCopyConstructionTest) {
 	EXPECT_EQ(ThrowOnCopyConstruct::deallocation_count, 0);
 	ThrowOnCopyConstruct::throw_after_ = 2;
 
-	dev::vector<ThrowOnCopyConstruct> v1(5);
+	xstd::vector<ThrowOnCopyConstruct> v1(5);
 
-	EXPECT_THROW(
-	    { dev::vector<ThrowOnCopyConstruct> v2(v1); }, std::runtime_error);
+	EXPECT_THROW({ xstd::vector<ThrowOnCopyConstruct> v2(v1); }, std::runtime_error);
 
 	EXPECT_EQ(ThrowOnCopyConstruct::copy_construct_count_, 2);
 	EXPECT_EQ(ThrowOnCopyConstruct::deallocation_count, 2);
 }
 
 TEST(VectorTest, MoveConstructorTest) {
-	dev::vector<int> v1{1, 2, 3};
-	dev::vector<int> v2(std::move(v1));
+	xstd::vector<int> v1{1, 2, 3};
+	xstd::vector<int> v2(std::move(v1));
 	EXPECT_EQ(v1.size(), 0);
 	EXPECT_EQ(v1.capacity(), 0);
 	EXPECT_EQ(v2.size(), 3);
@@ -168,8 +161,8 @@ TEST(VectorTest, MoveConstructorTest) {
 }
 
 TEST(VectorTest, CopyAssignmentTest) {
-	dev::vector<int> v1{1, 2, 3};
-	dev::vector<int> v2;
+	xstd::vector<int> v1{1, 2, 3};
+	xstd::vector<int> v2;
 	v2 = v1;
 
 	EXPECT_EQ(v1.size(), v2.size());
@@ -181,8 +174,8 @@ TEST(VectorTest, CopyAssignmentTest) {
 }
 
 TEST(VectorTest, MoveAssignmentTest) {
-	dev::vector<int> v1{1, 2, 3};
-	dev::vector<int> v2;
+	xstd::vector<int> v1{1, 2, 3};
+	xstd::vector<int> v2;
 	v2 = std::move(v1);
 
 	EXPECT_EQ(v1.size(), 0);
@@ -194,7 +187,7 @@ TEST(VectorTest, MoveAssignmentTest) {
 }
 
 TEST(VectorTest, AtTest) {
-	dev::vector<int> v{1, 2, 3};
+	xstd::vector<int> v{1, 2, 3};
 	EXPECT_EQ(v.at(0), 1);
 	EXPECT_EQ(v.at(1), 2);
 	EXPECT_EQ(v.at(2), 3);
@@ -203,20 +196,20 @@ TEST(VectorTest, AtTest) {
 }
 
 TEST(VectorTest, SubscriptOperatorTest) {
-	dev::vector<int> v{1, 2, 3};
+	xstd::vector<int> v{1, 2, 3};
 	for (int i{0}; i < v.size(); ++i) {
 		EXPECT_EQ(v[i], i + 1);
 	}
 }
 
 TEST(VectorTest, FrontAndBackTest) {
-	dev::vector<int> v{1, 2, 3};
+	xstd::vector<int> v{1, 2, 3};
 	EXPECT_EQ(v.front(), 1);
 	EXPECT_EQ(v.back(), 3);
 }
 
 TEST(VectorTest, EmptyTest) {
-	dev::vector<int> v;
+	xstd::vector<int> v;
 	EXPECT_EQ(v.empty(), true);
 
 	v.push_back(42);
@@ -224,7 +217,7 @@ TEST(VectorTest, EmptyTest) {
 }
 
 TEST(VectorTest, SizeAndCapacityTest) {
-	dev::vector<int> v;
+	xstd::vector<int> v;
 	EXPECT_EQ(v.size(), 0);
 	EXPECT_GE(v.capacity(), 0);
 
@@ -238,12 +231,12 @@ TEST(VectorTest, SizeAndCapacityTest) {
 }
 
 TEST(VectorTest, ReserveTest) {
-	dev::vector<int> v1;
+	xstd::vector<int> v1;
 	v1.reserve(10);
 	EXPECT_GE(v1.capacity(), 10);
 	EXPECT_EQ(v1.size(), 0);
 
-	dev::vector<int> v2{1, 2, 3, 4, 5, 6, 7};
+	xstd::vector<int> v2{1, 2, 3, 4, 5, 6, 7};
 	size_t old_capacity = v2.capacity();
 	EXPECT_GE(v2.capacity(), 7);
 	EXPECT_EQ(v2.size(), 7);
@@ -256,7 +249,7 @@ TEST(VectorTest, ReserveTest) {
 }
 
 TEST(VectorTest, ResizeTest) {
-	dev::vector<int> v{1, 2, 3};
+	xstd::vector<int> v{1, 2, 3};
 	v.resize(5);
 
 	EXPECT_EQ(v.size(), 5);
@@ -273,7 +266,7 @@ TEST(VectorTest, ResizeTest) {
 }
 
 TEST(VectorTest, PushBackTest) {
-	dev::vector<int> v;
+	xstd::vector<int> v;
 	v.push_back(1);
 	v.push_back(2);
 	v.push_back(3);
@@ -291,7 +284,7 @@ TEST(VectorTest, PushBackSelfReferenceTest) {
 	// a dangling reference, if it refers to the old storage (an element of
 	// the vector itself e.g. vec.back()). This test is meant for such an
 	// edge case.
-	dev::vector<int> vec{1};
+	xstd::vector<int> vec{1};
 	for (size_t i{0}; i < 64; ++i) {
 		vec.push_back(vec.back());
 		EXPECT_EQ(vec.back(), 1);
@@ -304,7 +297,7 @@ TEST(VectorTest, EmplaceBackTest) {
 		Point(int a, int b) : x(a), y(b) {}
 	};
 
-	dev::vector<Point> v;
+	xstd::vector<Point> v;
 	v.emplace_back(1, 2);
 	v.emplace_back(3, 4);
 
@@ -316,88 +309,88 @@ TEST(VectorTest, EmplaceBackTest) {
 }
 
 TEST(VectorTest, PopBackTest) {
-	dev::vector<int> v = {1, 2, 3};
+	xstd::vector<int> v = {1, 2, 3};
 	EXPECT_EQ(v.size(), 3);
 	v.pop_back();
 	EXPECT_EQ(v.size(), 2);
-	EXPECT_EQ(v, dev::vector<int>({1, 2}));
+	EXPECT_EQ(v, xstd::vector<int>({1, 2}));
 }
 
 TEST(VectorTest, InsertAtBeginning) {
-	dev::vector<int> v = {1, 2, 3};
-	dev::vector<int> src = {10, 20};
+	xstd::vector<int> v = {1, 2, 3};
+	xstd::vector<int> src = {10, 20};
 
 	auto it = v.insert(v.begin(), src.begin(), src.end());
 
 	EXPECT_EQ(v.size(), 5);
 	EXPECT_EQ(it, v.begin());
-	dev::vector<int> result{10, 20, 1, 2, 3};
+	xstd::vector<int> result{10, 20, 1, 2, 3};
 	for (size_t i{0}; i < result.size(); ++i)
 		EXPECT_EQ(v.at(i), result.at(i));
 }
 
 TEST(VectorTest, InsertAtEnd) {
-	dev::vector<int> v = {1, 2, 3};
-	dev::vector<int> src = {10, 20};
+	xstd::vector<int> v = {1, 2, 3};
+	xstd::vector<int> src = {10, 20};
 
 	auto it = v.insert(v.end(), src.begin(), src.end());
 
 	EXPECT_EQ(v.size(), 5);
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 3, 10, 20}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 3, 10, 20}));
 }
 
 TEST(VectorTest, InsertInMiddle) {
-	dev::vector<int> v = {1, 2, 3, 4};
-	dev::vector<int> src = {10, 20};
+	xstd::vector<int> v = {1, 2, 3, 4};
+	xstd::vector<int> src = {10, 20};
 
 	auto it = v.insert(v.begin() + 2, src.begin(), src.end());
 
 	EXPECT_EQ(v.size(), 6);
 	EXPECT_EQ(it, v.begin() + 2);
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 10, 20, 3, 4}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 10, 20, 3, 4}));
 }
 
 TEST(VectorTest, InsertEmptyRange) {
-	dev::vector<int> v = {1, 2, 3};
-	dev::vector<int> src;
+	xstd::vector<int> v = {1, 2, 3};
+	xstd::vector<int> src;
 
 	auto it = v.insert(v.begin() + 1, src.begin(), src.end());
 
 	EXPECT_EQ(v.size(), 3);
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 3}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 3}));
 }
 
 TEST(VectorTest, InsertIntoEmptyVector) {
-	dev::vector<int> v;
-	dev::vector<int> src = {1, 2, 3};
+	xstd::vector<int> v;
+	xstd::vector<int> src = {1, 2, 3};
 
 	auto it = v.insert(v.begin(), src.begin(), src.end());
 
 	EXPECT_EQ(v.size(), 3);
 	EXPECT_EQ(it, v.begin());
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 3}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 3}));
 }
 
 TEST(VectorTest, InsertWithinCapacity) {
-	dev::vector<int> v;
+	xstd::vector<int> v;
 	v.reserve(10);
 	EXPECT_GE(v.capacity(), 10);
 	v.push_back(1);
 	v.push_back(2);
 	v.push_back(3);
 
-	dev::vector<int> src = {10, 20};
+	xstd::vector<int> src = {10, 20};
 	v.insert(v.begin() + 1, src.begin(), src.end());
 
-	EXPECT_EQ(v, (dev::vector<int>{1, 10, 20, 2, 3}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 10, 20, 2, 3}));
 	EXPECT_GE(v.capacity(), 10);
 }
 
 TEST(VectorTest, InsertRequiresReallocation) {
-	dev::vector<int> v = {1, 2, 3};
+	xstd::vector<int> v = {1, 2, 3};
 	size_t old_cap = v.capacity();
 
-	dev::vector<int> src(100, 99);
+	xstd::vector<int> src(100, 99);
 	v.insert(v.begin() + 1, src.begin(), src.end());
 
 	EXPECT_GT(v.capacity(), old_cap);
@@ -411,38 +404,38 @@ TEST(VectorTest, InsertRequiresReallocation) {
 }
 
 TEST(VectorTest, SelfInsertFromBeginning) {
-	dev::vector<int> v = {1, 2, 3, 4, 5};
+	xstd::vector<int> v = {1, 2, 3, 4, 5};
 
 	// Insert first 3 elements at position 2
 	v.insert(v.begin() + 2, v.begin(), v.begin() + 3);
 
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 1, 2, 3, 3, 4, 5}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 1, 2, 3, 3, 4, 5}));
 }
 
 TEST(VectorTest, SelfInsertFromMiddle) {
-	dev::vector<int> v = {1, 2, 3, 4, 5};
+	xstd::vector<int> v = {1, 2, 3, 4, 5};
 
 	// Insert middle elements at beginning
 	v.insert(v.begin(), v.begin() + 1, v.begin() + 4);
 
 	EXPECT_EQ(v.size(), 8);
-	EXPECT_EQ(v, (dev::vector<int>{2, 3, 4, 1, 2, 3, 4, 5}));
+	EXPECT_EQ(v, (xstd::vector<int>{2, 3, 4, 1, 2, 3, 4, 5}));
 }
 
 TEST(VectorTest, SelfInsertFromEnd) {
-	dev::vector<int> v = {1, 2, 3, 4, 5};
+	xstd::vector<int> v = {1, 2, 3, 4, 5};
 
 	// Insert last 2 elements in middle
 	v.insert(v.begin() + 2, v.end() - 2, v.end());
 
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 4, 5, 3, 4, 5}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 4, 5, 3, 4, 5}));
 }
 
 TEST(VectorTest, SelfInsertOverlappingRanges) {
-	dev::vector<int> v = {1, 2, 3, 4, 5};
+	xstd::vector<int> v = {1, 2, 3, 4, 5};
 
 	// Insert range that overlaps with insertion point
 	v.insert(v.begin() + 2, v.begin() + 1, v.begin() + 4);
 
-	EXPECT_EQ(v, (dev::vector<int>{1, 2, 2, 3, 4, 3, 4, 5}));
+	EXPECT_EQ(v, (xstd::vector<int>{1, 2, 2, 3, 4, 3, 4, 5}));
 }

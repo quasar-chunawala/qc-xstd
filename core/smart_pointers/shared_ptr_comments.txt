@@ -1,7 +1,7 @@
 #include <atomic>
 #include <utility>
 
-namespace dev {
+namespace xstd {
 
 struct self_referential
 {
@@ -229,7 +229,7 @@ template <typename T, typename... Args> shared_ptr<T> make_shared(Args&&... args
     auto* cb = new control_block_with_storage<T>(std::forward<Args>(args)...);
     return shared_ptr<T>(cb->m_object, cb);
 }
-} // namespace dev
+} // namespace xstd
 
 // VR: missing features
 // - converting constructor

@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace dev {
+namespace xstd {
 
 	template <typename T> class vector {
 		using value_type = T;
@@ -25,10 +25,7 @@ namespace dev {
 
 		struct raw_deleter {
 			// only frees the memory, doesn't destroy objects
-			void operator()(T *ptr) noexcept {
-				operator delete(ptr,
-				                std::align_val_t(alignof(value_type)));
-			}
+			void operator()(T *ptr) noexcept { operator delete(ptr, std::align_val_t(alignof(value_type))); }
 		};
 
 		using raw_ptr = std::unique_ptr<T, raw_deleter>;
@@ -38,14 +35,11 @@ namespace dev {
 
 		// If an exception happens after this has been called,
 		// the destructor will run and deallocate the memory.
-		explicit vector(init_capacity_tag cap)
-		    : m_data{allocate_helper(cap.cap).release()},
-		      m_capacity{cap.cap} {}
+		explicit vector(init_capacity_tag cap) : m_data{allocate_helper(cap.cap).release()}, m_capacity{cap.cap} {}
 
 		template <typename U> void push_back_slow_path(U &&value) {
 			// allocate more memory
-			size_type new_capacity =
-			    capacity() ? growth_factor * capacity() : 1;
+			size_type new_capacity = capacity() ? growth_factor * capacity() : 1;
 			size_type offset = size();
 			size_type new_size = m_size + 1;
 			auto mem = allocate_helper(new_capacity);
@@ -70,39 +64,29 @@ namespace dev {
 		}
 
 		raw_ptr allocate_helper(size_type new_capacity) {
-			auto ptr = operator new(sizeof(value_type) * new_capacity,
-			                        std::align_val_t(alignof(value_type)));
+			auto ptr = operator new(sizeof(value_type) * new_capacity, std::align_val_t(alignof(value_type)));
 			return raw_ptr(static_cast<pointer>(ptr));
 		}
 
 		// Copies elements from old storage to new
 		// If T's copy/move ctor throws, the objects already constructed
 		// are destroyed and the exception is propagated to the caller.
-		void copy_old_storage_to_new(pointer source_first,
-		                             size_t num_elements,
-		                             pointer destination_first) {
+		void copy_old_storage_to_new(pointer source_first, size_t num_elements, pointer destination_first) {
 			if constexpr (std::is_nothrow_move_constructible_v<T>) {
-				std::uninitialized_move(source_first,
-				                        source_first + num_elements,
-				                        destination_first);
+				std::uninitialized_move(source_first, source_first + num_elements, destination_first);
 			} else {
-				std::uninitialized_copy(source_first,
-				                        source_first + num_elements,
-				                        destination_first);
+				std::uninitialized_copy(source_first, source_first + num_elements, destination_first);
 			}
 		}
 
-		template <typename... Args>
-		reference emplace_back_slow_path(Args &&...args) {
+		template <typename... Args> reference emplace_back_slow_path(Args &&...args) {
 			// allocate more memory
 			size_type offset = size();
 			size_type new_size = m_size + 1;
-			size_type new_capacity =
-			    capacity() ? growth_factor * capacity() : 1;
+			size_type new_capacity = capacity() ? growth_factor * capacity() : 1;
 			auto mem = allocate_helper(new_capacity);
 
-			std::construct_at(mem.get() + m_size,
-			                  std::forward<Args>(args)...);
+			std::construct_at(mem.get() + m_size, std::forward<Args>(args)...);
 			try {
 				copy_old_storage_to_new(m_data, m_size, mem.get());
 			} catch (std::exception &ex) {
@@ -117,10 +101,8 @@ namespace dev {
 			return back();
 		}
 
-		template <typename... Args>
-		reference emplace_back_fast_path(Args &&...args) {
-			std::construct_at(m_data + m_size,
-			                  std::forward<Args>(args)...);
+		template <typename... Args> reference emplace_back_fast_path(Args &&...args) {
+			std::construct_at(m_data + m_size, std::forward<Args>(args)...);
 			++m_size;
 			return back();
 		}
@@ -137,8 +119,7 @@ namespace dev {
 
 		vector() noexcept {}
 
-		vector(size_t n, const T &initial_value)
-		    : vector(init_capacity_tag(n)) {
+		vector(size_t n, const T &initial_value) : vector(init_capacity_tag(n)) {
 			std::uninitialized_fill_n(m_data, n, initial_value);
 			m_size = n;
 		}
@@ -150,14 +131,12 @@ namespace dev {
 			m_size = n;
 		}
 
-		vector(std::initializer_list<T> list)
-		    : vector(init_capacity_tag(list.size())) {
+		vector(std::initializer_list<T> list) : vector(init_capacity_tag(list.size())) {
 			std::uninitialized_copy(list.begin(), list.end(), m_data);
 			m_size = list.size();
 		}
 
-		vector(const_iterator first, const_iterator last)
-		    : vector(init_capacity_tag(std::distance(first, last))) {
+		vector(const_iterator first, const_iterator last) : vector(init_capacity_tag(std::distance(first, last))) {
 			if constexpr (std::is_nothrow_move_constructible_v<T>) {
 				std::uninitialized_move(first, last, m_data);
 			} else {
@@ -166,17 +145,14 @@ namespace dev {
 			m_size = std::distance(first, last);
 		}
 
-		vector(const vector &other)
-		    : vector(init_capacity_tag(other.capacity())) {
+		vector(const vector &other) : vector(init_capacity_tag(other.capacity())) {
 			// Perform a deep-copy of all the Ts
-			std::uninitialized_copy(
-			    other.m_data, other.m_data + other.m_size, m_data);
+			std::uninitialized_copy(other.m_data, other.m_data + other.m_size, m_data);
 			m_size = other.size();
 		}
 
 		vector(vector &&other) noexcept
-		    : m_data{std::exchange(other.m_data, nullptr)},
-		      m_size{std::exchange(other.m_size, 0)},
+		    : m_data{std::exchange(other.m_data, nullptr)}, m_size{std::exchange(other.m_size, 0)},
 		      m_capacity{std::exchange(other.m_capacity, 0)} {}
 
 		void swap(vector &other) noexcept {
@@ -212,9 +188,7 @@ namespace dev {
 
 		reference operator[](size_type idx) { return m_data[idx]; }
 
-		const_reference operator[](size_type idx) const {
-			return m_data[idx];
-		}
+		const_reference operator[](size_type idx) const { return m_data[idx]; }
 
 		// precondition: !empty()
 		reference front() { return (*this)[0]; }
@@ -235,11 +209,9 @@ namespace dev {
 
 			// Copy/move the Ts from the old storage to new storage
 			if constexpr (std::is_nothrow_move_constructible_v<T>) {
-				std::uninitialized_move(
-				    m_data, m_data + m_size, mem.get());
+				std::uninitialized_move(m_data, m_data + m_size, mem.get());
 			} else {
-				std::uninitialized_copy(
-				    m_data, m_data + m_size, mem.get());
+				std::uninitialized_copy(m_data, m_data + m_size, mem.get());
 			}
 
 			// Destroy objects in old storage and deallocate memory
@@ -262,8 +234,7 @@ namespace dev {
 		}
 
 		bool operator==(const vector &other) const {
-			return size() == other.size() &&
-			       std::equal(begin(), end(), other.begin());
+			return size() == other.size() && std::equal(begin(), end(), other.begin());
 		}
 
 		void reserve(size_type new_capacity) {
@@ -271,8 +242,7 @@ namespace dev {
 				return;
 
 			raw_ptr mem = allocate_helper(new_capacity);
-			copy_old_storage_to_new(
-			    m_data, m_size, mem.get()); // can throw
+			copy_old_storage_to_new(m_data, m_size, mem.get()); // can throw
 
 			std::destroy(m_data, m_data + m_size);
 			pointer new_ptr = mem.release();
@@ -296,22 +266,19 @@ namespace dev {
 
 				// Default construct elements at indicates
 				// [current_size,...,new_size-1]
-				std::uninitialized_value_construct(begin() + current_size,
-				                                   begin() + new_size);
+				std::uninitialized_value_construct(begin() + current_size, begin() + new_size);
 			}
 			m_size = new_size;
 		}
 
-		template <typename... Args>
-		reference emplace_back(Args &&...args) {
+		template <typename... Args> reference emplace_back(Args &&...args) {
 			if (is_full())
 				return emplace_back_slow_path(std::forward<Args>(args)...);
 			else
 				return emplace_back_fast_path(std::forward<Args>(args)...);
 		}
 
-		template <typename It>
-		iterator insert(const_iterator pos, It first, It last) {
+		template <typename It> iterator insert(const_iterator pos, It first, It last) {
 			auto pos_ = const_cast<iterator>(pos);
 			auto first_ = first;
 			auto last_ = last;
@@ -322,10 +289,9 @@ namespace dev {
 				size_type num_elems_to_shift = std::distance(pos_, end());
 				size_type remaining_capacity = capacity() - size();
 
-				dev::vector<T> temp;
+				xstd::vector<T> temp;
 				// handle self-referential insertion
-				if ((first_ >= begin() && first_ < end()) &&
-				    last_ > begin() && last_ <= end()) {
+				if ((first_ >= begin() && first_ < end()) && last_ > begin() && last_ <= end()) {
 					for (auto it{first_}; it != last_; ++it)
 						temp.push_back(*it);
 
@@ -334,8 +300,7 @@ namespace dev {
 				}
 
 				if (n > remaining_capacity) {
-					size_type excess_capacity_reqd = std::max(
-					    static_cast<int>(n - remaining_capacity), 0);
+					size_type excess_capacity_reqd = std::max(static_cast<int>(n - remaining_capacity), 0);
 					reserve(capacity() + excess_capacity_reqd);
 					// The iterator pos is invalidated. Update it.
 					pos_ = std::next(begin(), offset);
@@ -345,31 +310,25 @@ namespace dev {
 				// [begin, end()] sequence into raw uninitialized
 				// memory
 				if (n < num_elems_to_shift) {
-					if constexpr (std::is_nothrow_move_constructible_v<
-					                  T>) {
+					if constexpr (std::is_nothrow_move_constructible_v<T>) {
 						std::uninitialized_move(end() - n, end(), end());
 					} else {
 						std::uninitialized_copy(end() - n, end(), end());
 					}
 
 				} else {
-					size_type num_tail = std::max(
-					    static_cast<int>(n - num_elems_to_shift), 0);
-					if constexpr (std::is_nothrow_move_constructible_v<
-					                  T>) {
-						std::uninitialized_move(
-						    pos_, end(), end() + num_tail);
+					size_type num_tail = std::max(static_cast<int>(n - num_elems_to_shift), 0);
+					if constexpr (std::is_nothrow_move_constructible_v<T>) {
+						std::uninitialized_move(pos_, end(), end() + num_tail);
 					} else {
-						std::uninitialized_copy(
-						    pos_, end(), end() + num_tail);
+						std::uninitialized_copy(pos_, end(), end() + num_tail);
 					}
 				}
 
 				// objects to displace (copy or move) from [pos,end()]
 				// to the end of the container
 				if (n < num_elems_to_shift) {
-					if constexpr (std::is_nothrow_move_constructible_v<
-					                  T>) {
+					if constexpr (std::is_nothrow_move_constructible_v<T>) {
 						std::move_backward(pos_, end() - n, end());
 					} else {
 						std::copy_backward(pos_, end() - n, end());
@@ -378,16 +337,12 @@ namespace dev {
 
 				// objects from [first,last) to insert into raw
 				// uninitialized memory
-				const size_type num_tail =
-				    std::max(static_cast<int>(n - num_elems_to_shift), 0);
+				const size_type num_tail = std::max(static_cast<int>(n - num_elems_to_shift), 0);
 				if (n >= num_elems_to_shift) {
-					if constexpr (std::is_nothrow_move_constructible_v<
-					                  T>) {
-						std::uninitialized_move(
-						    last_ - num_tail, last_, end());
+					if constexpr (std::is_nothrow_move_constructible_v<T>) {
+						std::uninitialized_move(last_ - num_tail, last_, end());
 					} else {
-						std::uninitialized_copy(
-						    last_ - num_tail, last_, end());
+						std::uninitialized_copy(last_ - num_tail, last_, end());
 					}
 				}
 
@@ -403,4 +358,4 @@ namespace dev {
 			return pos_;
 		}
 	};
-} // namespace dev
+} // namespace xstd

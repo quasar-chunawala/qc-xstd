@@ -4,19 +4,19 @@
 
 TEST(UniquePtrTest, CreateAndAccessTest) {
 	int *raw_ptr = new int(42);
-	dev::unique_ptr<int> p1(raw_ptr);
+	xstd::unique_ptr<int> p1(raw_ptr);
 
 	EXPECT_EQ(*p1 == 42, true);
 	EXPECT_EQ(p1.get(), raw_ptr);
 
-	dev::unique_ptr<int> p2(new int(17));
+	xstd::unique_ptr<int> p2(new int(17));
 	EXPECT_EQ(*p2 == 17, true);
 	EXPECT_EQ(p2.get() != nullptr, true);
 }
 
 /* Move constructor - Transfer of ownership */
 TEST(UniquePtrTest, MoveConstructorTest) {
-	dev::unique_ptr p{dev::unique_ptr(new int(17))};
+	xstd::unique_ptr p{xstd::unique_ptr(new int(17))};
 
 	EXPECT_EQ(*p, 17);
 	EXPECT_EQ(p != nullptr, true);
@@ -24,8 +24,8 @@ TEST(UniquePtrTest, MoveConstructorTest) {
 
 /* Move assignment */
 TEST(UniquePtrTest, MoveAssignmentTest) {
-	dev::unique_ptr<int> p1(new int(42));
-	p1 = dev::unique_ptr<int>(new int(17));
+	xstd::unique_ptr<int> p1(new int(42));
+	p1 = xstd::unique_ptr<int>(new int(17));
 
 	EXPECT_EQ(p1 != nullptr, true);
 	EXPECT_EQ(*p1 == 17, true);
@@ -34,7 +34,7 @@ TEST(UniquePtrTest, MoveAssignmentTest) {
 // Modifiers
 /* release() : Returns the pointer to resource and releases ownership*/
 TEST(UniquePtrTest, ReleaseTest) {
-	dev::unique_ptr<double> ptr(new double(3.14));
+	xstd::unique_ptr<double> ptr(new double(3.14));
 	double *rawPtr = ptr.release();
 
 	EXPECT_EQ(ptr == nullptr, true);
@@ -47,7 +47,7 @@ TEST(UniquePtrTest, ReleaseTest) {
 
 /* reset() :  replaces the managed object */
 TEST(UniquePtrTest, ResetUniquePtr) {
-	dev::unique_ptr<int> ptr(new int(10));
+	xstd::unique_ptr<int> ptr(new int(10));
 	ptr.reset(new int(20));
 	EXPECT_EQ(ptr != nullptr, true);
 	EXPECT_EQ(*ptr == 20, true);
@@ -61,8 +61,8 @@ TEST(UniquePtrTest, SwapTest) {
 	int *first = new int(42);
 	int *second = new int(17);
 
-	dev::unique_ptr<int> p1(first);
-	dev::unique_ptr<int> p2(second);
+	xstd::unique_ptr<int> p1(first);
+	xstd::unique_ptr<int> p2(second);
 
 	swap(p1, p2);
 
@@ -74,7 +74,7 @@ TEST(UniquePtrTest, SwapTest) {
 /* get() : Returns a pointer to the managed object or nullptr*/
 TEST(UniquePtrTest, GetTest) {
 	double *resource = new double(0.50);
-	dev::unique_ptr p(resource);
+	xstd::unique_ptr p(resource);
 
 	EXPECT_EQ(p.get() == resource, true);
 	EXPECT_EQ(*(p.get()) == 0.50, true);
@@ -83,8 +83,8 @@ TEST(UniquePtrTest, GetTest) {
 /* operator bool() : Checks whether *this owns an object*/
 /*TEST(UniquePtrTest, OperatorBoolTest){
     int* resource = new int(28);
-    dev::unique_ptr<int> p1;
-    dev::unique_ptr<int> p2(resource);
+    xstd::unique_ptr<int> p1;
+    xstd::unique_ptr<int> p2(resource);
 
     EXPECT_EQ(p1, false);
     EXPECT_EQ(p2, true);
@@ -103,7 +103,7 @@ TEST(UniquePtrTest, IndirectionOperatorTest) {
 		int foo() { return _n; }
 	};
 
-	dev::unique_ptr<X> ptr(new X(10));
+	xstd::unique_ptr<X> ptr(new X(10));
 	EXPECT_EQ((*ptr)._n == 10, true);
 	EXPECT_EQ(ptr->foo() == 10, true);
 }
@@ -111,7 +111,7 @@ TEST(UniquePtrTest, IndirectionOperatorTest) {
 TEST(UniquePtrTest, PointerToArrayOfTConstructionAndAccess) {
 	/* Constructing unique_ptr<T[]> and access */
 	{
-		dev::unique_ptr<int[]> p(new int[5]{1, 2, 3, 4, 5});
+		xstd::unique_ptr<int[]> p(new int[5]{1, 2, 3, 4, 5});
 		EXPECT_EQ(p != nullptr, true);
 		EXPECT_EQ(*p == 1, true);
 		EXPECT_EQ(p[2] == 3, true);

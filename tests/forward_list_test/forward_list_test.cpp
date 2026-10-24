@@ -3,13 +3,13 @@
 #include <core/containers/forward_list.h>
 
 TEST(ForwardListTest, DefaultConstructorTest) {
-	dev::forward_list<int> lst;
+	xstd::forward_list<int> lst;
 	EXPECT_EQ(lst.empty(), true);
 	EXPECT_EQ(lst.size(), 0);
 }
 
 TEST(ForwardListTest, InitializerListConstructorTest) {
-	dev::forward_list<int> lst{1, 2, 3, 4, 5};
+	xstd::forward_list<int> lst{1, 2, 3, 4, 5};
 	EXPECT_EQ(lst.size(), 5);
 	EXPECT_EQ(lst.empty(), false);
 
@@ -21,7 +21,7 @@ TEST(ForwardListTest, InitializerListConstructorTest) {
 
 TEST(ForwardListTest, RangeConstructorTest) {
 	std::vector<int> vec{1, 2, 3, 4, 5};
-	dev::forward_list<int> lst(vec.begin(), vec.end());
+	xstd::forward_list<int> lst(vec.begin(), vec.end());
 
 	EXPECT_EQ(lst.size(), 5);
 	auto it = lst.begin();
@@ -31,8 +31,8 @@ TEST(ForwardListTest, RangeConstructorTest) {
 }
 
 TEST(ForwardListTest, CopyConstructorTest) {
-	dev::forward_list<int> lst1{1, 2, 3};
-	dev::forward_list<int> lst2(lst1);
+	xstd::forward_list<int> lst1{1, 2, 3};
+	xstd::forward_list<int> lst2(lst1);
 
 	EXPECT_EQ(lst1.size(), lst2.size());
 	auto it1 = lst1.begin();
@@ -45,8 +45,8 @@ TEST(ForwardListTest, CopyConstructorTest) {
 }
 
 TEST(ForwardListTest, MoveConstructorTest) {
-	dev::forward_list<int> lst1{1, 2, 3};
-	dev::forward_list<int> lst2(std::move(lst1));
+	xstd::forward_list<int> lst1{1, 2, 3};
+	xstd::forward_list<int> lst2(std::move(lst1));
 
 	EXPECT_EQ(lst1.empty(), true);
 	EXPECT_EQ(lst2.size(), 3);

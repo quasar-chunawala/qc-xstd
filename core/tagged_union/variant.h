@@ -5,17 +5,15 @@
 
 #include <core/tagged_union/utilities.h>
 
-namespace dev {
+namespace xstd {
 
 	template <typename... Ts> class variant;
 
 	// Forward declaration
 	// so the friend declaration inside variant resolves
-	template <size_t I, typename... Ts>
-	constexpr decltype(auto) get(const variant<Ts...> &v);
+	template <size_t I, typename... Ts> constexpr decltype(auto) get(const variant<Ts...> &v);
 
-	template <typename T, typename... Ts>
-	constexpr T &get(const variant<Ts...> &v);
+	template <typename T, typename... Ts> constexpr T &get(const variant<Ts...> &v);
 
 	template <typename... Ts> class variant {
 		using index_type = tools::uint_atleast_t<sizeof...(Ts)>;
@@ -30,8 +28,7 @@ namespace dev {
 		 * value of the first alternative.
 		 */
 		constexpr variant() {
-			tools::construct_at<0>(m_data,
-			                       tools::get_nth_type_t<0, Ts...>());
+			tools::construct_at<0>(m_data, tools::get_nth_type_t<0, Ts...>());
 			m_idx = 0;
 		}
 
@@ -39,10 +36,8 @@ namespace dev {
 		 * @brief Converting constructor. Constructs a variant holding
 		 * the alternative of type @p T, from @p x.
 		 */
-		template <tools::exists<Ts...> T>
-		constexpr explicit variant(T &&x) {
-			tools::construct_at<tools::find_index_of_v<T, Ts...>>(
-			    m_data, TOOLS_FWD(x));
+		template <tools::exists<Ts...> T> constexpr explicit variant(T &&x) {
+			tools::construct_at<tools::find_index_of_v<T, Ts...>>(m_data, TOOLS_FWD(x));
 			m_idx = tools::find_index_of_v<T, Ts...>;
 		}
 
@@ -53,14 +48,9 @@ namespace dev {
 		 */
 		constexpr variant(const variant &other) {
 			index_type idx = other.m_idx;
-			constexpr auto idx_seq =
-			    std::make_index_sequence<sizeof...(Ts)>();
+			constexpr auto idx_seq = std::make_index_sequence<sizeof...(Ts)>();
 			[&]<auto... Indices>(std::index_sequence<Indices...>) {
-				(((idx == Indices)
-				      ? (tools::construct_at<Indices>(
-				             m_data, tools::get<Indices>(other.m_data)),
-				         0)
-				      : 0),
+				(((idx == Indices) ? (tools::construct_at<Indices>(m_data, tools::get<Indices>(other.m_data)), 0) : 0),
 				 ...);
 			}(idx_seq);
 			m_idx = idx;
@@ -74,14 +64,10 @@ namespace dev {
 		 */
 		constexpr variant(variant &&other) noexcept {
 			index_type idx = other.m_idx;
-			constexpr auto idx_seq =
-			    std::make_index_sequence<sizeof...(Ts)>();
+			constexpr auto idx_seq = std::make_index_sequence<sizeof...(Ts)>();
 			[&]<auto... Indices>(std::index_sequence<Indices...>) {
 				(((idx == Indices)
-				      ? (tools::construct_at<Indices>(
-				             m_data,
-				             tools::get<Indices>(std::move(other.m_data))),
-				         0)
+				      ? (tools::construct_at<Indices>(m_data, tools::get<Indices>(std::move(other.m_data))), 0)
 				      : 0),
 				 ...);
 			}(idx_seq);
@@ -101,10 +87,7 @@ namespace dev {
 			if (m_idx == other.m_idx) {
 				// swap(get<m_idx>(*this), tools::get<m_idx>(other));
 				return [&]<size_t... Idxs>(std::index_sequence<Idxs...>) {
-					(((m_idx == Idxs)
-					      ? (swap(get<Idxs>(*this), get<Idxs>(other)), 0)
-					      : 0),
-					 ...);
+					(((m_idx == Idxs) ? (swap(get<Idxs>(*this), get<Idxs>(other)), 0) : 0), ...);
 				}(std::make_index_sequence<sizeof...(Ts)>());
 			} else {
 				auto p = std::move(*this);
@@ -134,8 +117,7 @@ namespace dev {
 		 * type
 		 * @p T to the variant.
 		 */
-		template <tools::exists<Ts...> T>
-		constexpr variant<Ts...> &operator=(T &&element) {
+		template <tools::exists<Ts...> T> constexpr variant<Ts...> &operator=(T &&element) {
 			this->~variant();
 			constexpr size_t i = tools::find_index_of_v<T, Ts...>;
 			tools::construct_at<i>(m_data, TOOLS_FWD(element));
@@ -147,13 +129,9 @@ namespace dev {
 		 * @brief Destructor. Destroys the currently held alternative.
 		 */
 		constexpr ~variant() {
-			constexpr auto idx_seq =
-			    std::make_index_sequence<sizeof...(Ts)>();
+			constexpr auto idx_seq = std::make_index_sequence<sizeof...(Ts)>();
 			[&]<auto... Indices>(std::index_sequence<Indices...>) {
-				(((m_idx == Indices)
-				      ? (tools::destroy_at<Indices>(m_data), 0)
-				      : 0),
-				 ...);
+				(((m_idx == Indices) ? (tools::destroy_at<Indices>(m_data), 0) : 0), ...);
 			}(idx_seq);
 		}
 
@@ -163,36 +141,28 @@ namespace dev {
 		 */
 		constexpr std::size_t index() const noexcept { return m_idx; }
 
-		template <size_t I, typename... Us>
-		constexpr friend decltype(auto) get(const variant<Us...> &v);
+		template <size_t I, typename... Us> constexpr friend decltype(auto) get(const variant<Us...> &v);
 
-		template <typename T, typename... Us>
-		constexpr friend T &get(const variant<Us...> &v);
+		template <typename T, typename... Us> constexpr friend T &get(const variant<Us...> &v);
 
-		template <size_t I, typename... Us>
-		constexpr friend decltype(auto) get(variant<Us...> &v);
+		template <size_t I, typename... Us> constexpr friend decltype(auto) get(variant<Us...> &v);
 
-		template <typename T, typename... Us>
-		constexpr friend T &get(variant<Us...> &v);
+		template <typename T, typename... Us> constexpr friend T &get(variant<Us...> &v);
 	};
 
-	template <size_t I, typename... Ts>
-	constexpr decltype(auto) get(const variant<Ts...> &v) {
+	template <size_t I, typename... Ts> constexpr decltype(auto) get(const variant<Ts...> &v) {
 		return tools::get<I>(v.m_data);
 	}
 
-	template <typename T, typename... Ts>
-	constexpr T &get(const variant<Ts...> &v) {
+	template <typename T, typename... Ts> constexpr T &get(const variant<Ts...> &v) {
 		return tools::get<tools::find_index_of_v<T, Ts...>>(v.m_data);
 	}
 
-	template <size_t I, typename... Ts>
-	constexpr decltype(auto) get(variant<Ts...> &v) {
+	template <size_t I, typename... Ts> constexpr decltype(auto) get(variant<Ts...> &v) {
 		return tools::get<I>(v.m_data);
 	}
 
-	template <typename T, typename... Ts>
-	constexpr T &get(variant<Ts...> &v) {
+	template <typename T, typename... Ts> constexpr T &get(variant<Ts...> &v) {
 		return tools::get<tools::find_index_of_v<T, Ts...>>(v.m_data);
 	}
-} // namespace dev
+} // namespace xstd

@@ -2,7 +2,7 @@
 #include <utility>
 
 // Compiler Explorer: https://compiler-explorer.com/z/var7onqaW
-namespace dev {
+namespace xstd {
 
 	/**
 	 * @brief The default deleter for the managed object
@@ -26,8 +26,7 @@ namespace dev {
 	};
 
 	// Single object version
-	template <typename T, typename D = default_deleter<T>>
-	class unique_ptr : public D {
+	template <typename T, typename D = default_deleter<T>> class unique_ptr : public D {
 	public:
 		using deleter_type = D;
 		using value_type = T;
@@ -64,8 +63,7 @@ namespace dev {
 			// When we swap two unique pointers, you expect the
 			// point-to-pool or arena to be swapped as well.
 			deleter_type *this_deleter = static_cast<deleter_type *>(this);
-			deleter_type *other_deleter =
-			    static_cast<deleter_type *>(&other);
+			deleter_type *other_deleter = static_cast<deleter_type *>(&other);
 			std::swap(this_deleter, other_deleter);
 		}
 
@@ -73,8 +71,7 @@ namespace dev {
 		 * @brief Move constructor
 		 */
 		unique_ptr(unique_ptr &&other) noexcept
-		    : m_underlying_ptr{
-		          std::exchange(other.m_underlying_ptr, nullptr)},
+		    : m_underlying_ptr{std::exchange(other.m_underlying_ptr, nullptr)},
 		      deleter_type{std::move(static_cast<deleter_type>(other))} {}
 
 		/**
@@ -112,9 +109,7 @@ namespace dev {
 		/**
 		 * @brief Releases the underlying managed resource
 		 */
-		[[nodiscard]] T *release() {
-			return std::exchange(m_underlying_ptr, nullptr);
-		}
+		[[nodiscard]] T *release() { return std::exchange(m_underlying_ptr, nullptr); }
 
 		/**
 		 * @brief Replaces the managed object
@@ -129,38 +124,27 @@ namespace dev {
 		/**
 		 * @brief Implementation of operator bool()
 		 */
-		explicit operator bool() const {
-			return m_underlying_ptr == nullptr;
-		}
+		explicit operator bool() const { return m_underlying_ptr == nullptr; }
 
 		/**
 		 * @brief Implementation of the spaceship operator
 		 */
-		friend auto operator<=>(const unique_ptr &lhs,
-		                        const unique_ptr &rhs) {
-			return lhs.get() <=> rhs.get();
-		}
+		friend auto operator<=>(const unique_ptr &lhs, const unique_ptr &rhs) { return lhs.get() <=> rhs.get(); }
 
 		/**
 		 * @brief Compare a unique_ptr will nullptr
 		 */
-		friend bool operator==(const unique_ptr &lhs, std::nullptr_t) {
-			return lhs.get() == nullptr;
-		}
+		friend bool operator==(const unique_ptr &lhs, std::nullptr_t) { return lhs.get() == nullptr; }
 
 		/**
 		 * @brief Compare a nullptr will unique_ptr
 		 */
-		friend bool operator==(std::nullptr_t, const unique_ptr &rhs) {
-			return rhs.get() == nullptr;
-		}
+		friend bool operator==(std::nullptr_t, const unique_ptr &rhs) { return rhs.get() == nullptr; }
 
 		/**
 		 * @brief std::swap called on two unique_ptr objects
 		 */
-		friend void swap(unique_ptr &lhs, unique_ptr &rhs) noexcept {
-			lhs.swap(rhs);
-		}
+		friend void swap(unique_ptr &lhs, unique_ptr &rhs) noexcept { lhs.swap(rhs); }
 
 	private:
 		T *m_underlying_ptr;
@@ -204,8 +188,7 @@ namespace dev {
 			// When we swap two unique pointers, you expect the
 			// point-to-pool or arena to be swapped as well.
 			deleter_type *this_deleter = static_cast<deleter_type *>(this);
-			deleter_type *other_deleter =
-			    static_cast<deleter_type *>(&other);
+			deleter_type *other_deleter = static_cast<deleter_type *>(&other);
 			std::swap(this_deleter, other_deleter);
 		}
 
@@ -213,8 +196,7 @@ namespace dev {
 		 * @brief Move constructor
 		 */
 		unique_ptr(unique_ptr &&other) noexcept
-		    : m_underlying_ptr{
-		          std::exchange(other.m_underlying_ptr, nullptr)},
+		    : m_underlying_ptr{std::exchange(other.m_underlying_ptr, nullptr)},
 		      deleter_type{std::move(static_cast<deleter_type>(other))} {}
 
 		/**
@@ -252,17 +234,13 @@ namespace dev {
 		 * @brief Index of operator. Provides access to the
 		 * managed array.
 		 */
-		[[nodiscard]] reference operator[](std::size_t index) {
-			return m_underlying_ptr[index];
-		}
+		[[nodiscard]] reference operator[](std::size_t index) { return m_underlying_ptr[index]; }
 
 		// Modifiers
 		/**
 		 * @brief Releases the underlying managed resource
 		 */
-		[[nodiscard]] T *release() {
-			return std::exchange(m_underlying_ptr, nullptr);
-		}
+		[[nodiscard]] T *release() { return std::exchange(m_underlying_ptr, nullptr); }
 
 		/**
 		 * @brief Replaces the managed object
@@ -277,33 +255,24 @@ namespace dev {
 		/**
 		 * @brief Implementation of operator bool()
 		 */
-		explicit operator bool() const {
-			return m_underlying_ptr == nullptr;
-		}
+		explicit operator bool() const { return m_underlying_ptr == nullptr; }
 
 		/**
 		 * @brief Implementation of the spaceship operator
 		 */
-		friend auto operator<=>(const unique_ptr &lhs,
-		                        const unique_ptr &rhs) {
-			return lhs.get() <=> rhs.get();
-		}
+		friend auto operator<=>(const unique_ptr &lhs, const unique_ptr &rhs) { return lhs.get() <=> rhs.get(); }
 
 		/**
 		 * @brief Compare a unique_ptr will nullptr
 		 */
-		friend bool operator==(const unique_ptr &lhs, std::nullptr_t) {
-			return lhs.get() == nullptr;
-		}
+		friend bool operator==(const unique_ptr &lhs, std::nullptr_t) { return lhs.get() == nullptr; }
 
 		/**
 		 * @brief Compare a nullptr will unique_ptr
 		 */
-		friend bool operator==(std::nullptr_t, const unique_ptr &rhs) {
-			return rhs.get() == nullptr;
-		}
+		friend bool operator==(std::nullptr_t, const unique_ptr &rhs) { return rhs.get() == nullptr; }
 
 	private:
 		pointer m_underlying_ptr;
 	};
-} // namespace dev
+} // namespace xstd
