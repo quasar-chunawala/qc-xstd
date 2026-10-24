@@ -75,7 +75,7 @@ XSTD_HARDENING_MODE_DEBUG
 #ifndef XSTD_TRAP
 	#if __has_builtin(__builtin_trap) || defined(__GNUC__)
 		#define XSTD_TRAP() __builtin_trap()
-	#elifdef(_MSC_VER)
+	#elif defined(_MSC_VER)
 		// __debugbreak() alone doesn't mark the site as noreturn to
 		// the optimizer;
 		// __assume(false) tells MSVC that the control never returns
