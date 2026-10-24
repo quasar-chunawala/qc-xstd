@@ -2,6 +2,7 @@
 #define SOA_SPLIT_BUFFER_H
 
 #include <cstdint>
+#include <memory>
 #include <ranges>
 #include <tuple>
 
@@ -70,11 +71,11 @@ namespace xstd::detail {
 			References *operator->() { return this; }
 		};
 #endif
-
+		Pointers pointers_{};
 		std::size_t begin_offset_{0};
 		std::size_t size_{0};
 		std::size_t capacity_{0};
-		Pointers pointers_{};
+		[[no_unique_address]] Allocator alloc_;
 
 #if __cpp_impl_reflection
 		using tuple_pointers_t = [:std::meta::substitute(^^std::tuple, ptr_members |
@@ -229,11 +230,14 @@ namespace xstd::detail {
 			size_ = new_size;
 		}
 
-		/// Copy constructs n objects starting at end()
-		/// Pre-condition: n > 0
-		/// Pre-condition: size() + n <= capacity()
-		/// Post-condition: size() = old size() + n
-		/// Post-condition: [i] == value for all i in [size() - n,size())
+		/**
+		 * @brief Copy construct n objects starting at end().
+		 *
+		 * @pre n > 0
+		 * @pre size() + n <= capacity()
+		 * @post size() = old_size + n
+		 * @post [i] == value for all i in [size() - n, size())
+		 */
 		constexpr void construct_at_end(size_type n, const_reference value) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(n > 0, "The number of objects to construct n, must satisfy n > 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + n <= capacity(),
@@ -241,7 +245,13 @@ namespace xstd::detail {
 			XSTD_RECORD_OLD_VALUE(old_size, size());
 			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n");
 
+			// ConstructionTransaction is an RAII wrapper used for book-keeping. If
 			ConstructionTransaction txn(this, end(), n);
+			for (; txn.pos_ != txn.end_; ++txn.pos_) {
+				auto [... member_ptrs] = pointers_;
+				auto [... member_values] = value;
+				(std::allocator_traits<Allocator>::construct(alloc_, std::to_address(member_ptrs), member_values), ...);
+			}
 		}
 	};
 } // namespace xstd::detail
