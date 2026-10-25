@@ -7,6 +7,7 @@
 #include <ranges>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 namespace xstd::detail {
 	template <typename T, typename Allocator> struct soa_split_buffer;
@@ -60,13 +61,15 @@ template <typename T, typename Alloc, typename Iterator> struct ConstructionTran
 	 * @tparam Args Member types of T
 	 */
 	template <typename Allocator, typename... Args> struct SOAVecElementConstructionTransaction {
-		std::tuple<Args &...> args_{};
+		std::tuple<Args&&...> args_{};
 		std::tuple<Args *...> ptrs_{};
 		size_t num_elements_constructed{0};
 		[[no_unique_address]] Allocator allocator_;
 
-		SOAVecElementConstructionTransaction(Args... args, Args *...ptrs, Allocator allocator)
-		    : args_{std::tie(args...)}, ptrs_{ptrs...}, allocator_{allocator} {}
+		template<typename... MemberTypes>
+		requires (std::is_same_v<Args, std::remove_cvref_t<MemberTypes>> && ...)
+		SOAVecElementConstructionTransaction(const MemberTypes&... args, MemberTypes *...ptrs, Allocator allocator)
+		    : args_{std::forward_as_tuple(args...)}, ptrs_{ptrs...}, allocator_{allocator} {}
 
 		constexpr void destroy() {
 			return [&]<size_t... Indices>(std::index_sequence<Indices...>){
@@ -75,7 +78,7 @@ template <typename T, typename Alloc, typename Iterator> struct ConstructionTran
 		}
 
 		template <typename Arg> constexpr void construct_impl(Arg &&arg, Arg *ptr) {
-			std::construct_at(ptr, arg);
+			std::construct_at(ptr, std::forward<Arg>(arg));
 			++num_elements_constructed;
 		}
 
@@ -87,7 +90,7 @@ template <typename T, typename Alloc, typename Iterator> struct ConstructionTran
 
 		constexpr void construct() {
 			template for (constexpr int I : std::views::iota(sizeof...(Args))) {
-				construct_impl(std::get<I>(args_), std::get<I>(ptrs_));
+				construct_impl(std::get<I>(std::forward<Args>(args_)), std::get<I>(ptrs_));
 			}
 		};
 	};

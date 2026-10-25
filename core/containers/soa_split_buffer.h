@@ -249,10 +249,11 @@ namespace xstd::detail {
 			ConstructionTransaction txn(this, end(), n);
 			for (; txn.pos_ != txn.end_; ++txn.pos_) {
 				auto [... member_ptrs] = pointers_;
-				auto& [... member_values] = value;
+				auto &[... member_values] = value;
 				// RAII guard that provides that offers strong exception safety, when constructing a single
 				// T element, in the member declaration order.
-				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(member_values..., member_ptrs..., alloc_);
+				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
+				    member_values..., member_ptrs..., alloc_);
 			}
 		}
 
@@ -280,14 +281,29 @@ namespace xstd::detail {
 		}
 
 		/**
+		 * @brief Determine the alignment boundary
+		 *
+		 * @return constexpr size_t
+		 */
+		constexpr size_t required_alignment() {
+			size_t align_at_boundary{alignof(T)};
+#if __cpp_impl_reflection
+			align_at_boundary = std::meta::alignment_of(type_of(members[0]));
+#endif
+			return align_at_boundary;
+		}
+
+		constexpr std::byte *allocate(size_t capacity) {}
+
+		/**
 		 * @brief Default constructor.
 		 */
 		constexpr soa_split_buffer() = default;
 
 		constexpr soa_split_buffer(size_type start, size_type capacity) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(capacity > 0, "The capacity must be greater than 0");
-			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity, "Cannot have a start point outside the capacity");
-
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity,
+			                                   "Cannot have a start point outside the capacity");
 		}
 	};
 } // namespace xstd::detail
