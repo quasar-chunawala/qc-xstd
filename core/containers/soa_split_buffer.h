@@ -292,36 +292,46 @@ namespace xstd::detail {
 		 * in the soa_split_buffer.
 		 * @tparam MemberType
 		 * @param offset
+		 * @details In general x & (~x) isolates the lowest set bit of x.
+		 * @verbatim
+		 * If x is a power of 2, for example, let x := 0b0000 1000 (2^3), then :
+		 *
+		 *		   (x - 1)  -->  0b0000 0111
+		 *
+		 *  Example 1. v := 5.
+		 *     v + (x - 1)  -->  0b0000 1100
+		 *		 & (~x + 1) -->  0b1111 1000
+		 * ---------------------------------
+		 *                       0b0000 1000
+		 *
+		 *  Example 2. v := 8.
+		 *     v + (x - 1)  -->  0b0000 1111
+		 *		 & (~x + 1) -->  0b1111 1000
+		 * ---------------------------------
+		 *                       0b0000 1000
+		 *
+		 *  Example 3. v := 9.
+		 *     v + (x - 1)  -->  0b0001 0000
+		 *		 & (~x + 1) -->  0b1111 1000
+		 * ---------------------------------
+		 *                       0b0001 0000
+		 *
+		 * (v + (x - 1)) & (~x + 1) gives v rounded down to the nearest multiple
+		 * of x.
+		 * @endverbatim
 		 * @return
 		 */
 		template <typename MemberType> constexpr size_t calculation_allocation_offset(size_t offset) {
-			// In general x & (~x) isolates the lowest set bit of x.
-			// If x is a power of 2, for example, let x := 0b0000 1000 (2^3), then :
-			//		   (x - 1)  -->  0b0000 0111
-			//
-			//  Example 1. v := 5.
-			//     v + (x - 1)  -->  0b0000 1100
-			//		 & (~x + 1) -->  0b1111 1000
-			// ---------------------------------
-			//                       0b0000 1000
-			//
-			//  Example 2. v := 8.
-			//     v + (x - 1)  -->  0b0000 1111
-			//		 & (~x + 1) -->  0b1111 1000
-			// ---------------------------------
-			//                       0b0000 1000
-			//
-			//  Example 3. v := 9.
-			//     v + (x - 1)  -->  0b0001 0000
-			//		 & (~x + 1) -->  0b1111 1000
-			// ---------------------------------
-			//                       0b0001 0000
-			//
-			// (v + (x - 1)) & (~x + 1) gives v rounded down to the nearest multiple
-			// of x.
 			return (offset + alignof(MemberType) - 1) & (~alignof(MemberType) + 1);
 		}
 
+		/**
+		 * @brief Helper allocation function that calculates the allocation size and obtains
+		 *.memory on the heap large enough to hold capacity elements of type T in SoA fashion.
+		 *
+		 * @param capacity The user-requested capacity for the container.
+		 * @return constexpr std::byte* The memory address of the resultant allocation.
+		 */
 		constexpr std::byte *allocate_memory(size_t capacity) {
 			static constexpr size_t alignment = alignof(T);
 			size_t nbytes = calculate_allocation_size(capacity);
