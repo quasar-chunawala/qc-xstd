@@ -270,11 +270,11 @@ namespace xstd::detail {
 			template for (constexpr int I : std::views::iota(0, num_members)) {
 				size_t align_requirement = std::meta::alignment_of(type_of(members[I]));
 				if constexpr (I > 0) {
-					size_t padding = bytes_required & (align_requirement - 1);
+					size_t padding = required_bytes & (align_requirement - 1);
 					padding = padding ? align_requirement - padding : 0;
-					bytes_required += padding;
+					required_bytes += padding;
 				}
-				bytes_required += size_of(type_of(members[I])) * requested_capacity;
+				required_bytes += size_of(type_of(members[I])) * requested_capacity;
 			}
 #endif
 			return required_bytes;
