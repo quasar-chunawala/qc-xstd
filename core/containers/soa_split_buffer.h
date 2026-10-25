@@ -77,6 +77,13 @@ namespace xstd::detail {
 		std::size_t capacity_{0};
 		[[no_unique_address]] Allocator alloc_;
 
+		/**
+		 * @brief StorageBlock type is used by the allocate_memory functions as a unit memory allocation.
+		 */
+		struct alignas(T) StorageBlock {
+			std::byte byte_array[alignof(T)];
+		};
+
 #if __cpp_impl_reflection
 		using tuple_pointers_t = [:std::meta::substitute(^^std::tuple, ptr_members |
 		                                                                   std::views::transform(std::meta::type_of) |
@@ -263,7 +270,7 @@ namespace xstd::detail {
 		 * @param requested_capacity The requested spare capacity.
 		 * @return The number of bytes of raw memory storage required.
 		 */
-		constexpr size_t required_bytes(size_t requested_capacity) {
+		constexpr size_t calculate_allocation_size(size_t requested_capacity) {
 			size_t required_bytes = 0;
 #if __cpp_impl_reflection
 			static constexpr int num_members = members.size();
@@ -281,16 +288,52 @@ namespace xstd::detail {
 		}
 
 		/**
-		 * @brief Determine the alignment boundary
-		 *
-		 * @return constexpr size_t
+		 * @brief Determine the offset in bytes for the array of values of type MemberType
+		 * in the soa_split_buffer.
+		 * @tparam MemberType
+		 * @param offset
+		 * @return
 		 */
-		constexpr size_t required_alignment() {
-			size_t align_at_boundary{alignof(T)};
-#if __cpp_impl_reflection
-			align_at_boundary = std::meta::alignment_of(type_of(members[0]));
-#endif
-			return align_at_boundary;
+		template <typename MemberType> constexpr size_t calculation_allocation_offset(size_t offset) {
+			// In general x & (~x) isolates the lowest set bit of x.
+			// If x is a power of 2, for example, let x := 0b0000 1000 (2^3), then :
+			//		   (x - 1)  -->  0b0000 0111
+			//
+			//  Example 1. v := 5.
+			//     v + (x - 1)  -->  0b0000 1100
+			//		 & (~x + 1) -->  0b1111 1000
+			// ---------------------------------
+			//                       0b0000 1000
+			//
+			//  Example 2. v := 8.
+			//     v + (x - 1)  -->  0b0000 1111
+			//		 & (~x + 1) -->  0b1111 1000
+			// ---------------------------------
+			//                       0b0000 1000
+			//
+			//  Example 3. v := 9.
+			//     v + (x - 1)  -->  0b0001 0000
+			//		 & (~x + 1) -->  0b1111 1000
+			// ---------------------------------
+			//                       0b0001 0000
+			//
+			// (v + (x - 1)) & (~x + 1) gives v rounded down to the nearest multiple
+			// of x.
+			return (offset + alignof(MemberType) - 1) & (~alignof(MemberType) + 1);
+		}
+
+		constexpr std::byte *allocate_memory(size_t capacity) {
+			static constexpr size_t alignment = alignof(T);
+			size_t nbytes = calculate_allocation_size(capacity);
+
+			// Rebind the allocator
+			using traits = typename std::allocator_traits<Allocator>::template rebind_traits<StorageBlock>;
+			using byte_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<StorageBlock>;
+
+			byte_allocator_type byte_allocator(alloc_);
+			size_t num_blocks = (nbytes + alignment - 1) / alignment;
+			StorageBlock *raw_memory = traits::allocate(byte_allocator, num_blocks);
+			return static_cast<std::byte *>(raw_memory);
 		}
 
 		/**
@@ -298,10 +341,11 @@ namespace xstd::detail {
 		 */
 		constexpr soa_split_buffer() = default;
 
-		constexpr soa_split_buffer(size_type start, size_type capacity) {
+		constexpr soa_split_buffer(size_type begin_offset, size_type capacity) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(capacity > 0, "The capacity must be greater than 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity,
 			                                   "Cannot have a start point outside the capacity");
+			std::byte *raw_memory = allocate_memory(capacity);
 		}
 	};
 } // namespace xstd::detail
