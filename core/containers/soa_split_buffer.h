@@ -231,27 +231,40 @@ namespace xstd::detail {
 		}
 
 		/**
-		 * @brief Copy construct n objects starting at end().
+		 * @brief Copy constructs n objects starting at end().
 		 *
 		 * @pre n > 0
 		 * @pre size() + n <= capacity()
 		 * @post size() = old_size + n
 		 * @post [i] == value for all i in [size() - n, size())
 		 */
-		constexpr void construct_at_end(size_type n, const_reference value) {
+		constexpr void copy_construct_at_end(size_type n, const_reference value) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(n > 0, "The number of objects to construct n, must satisfy n > 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + n <= capacity(),
 			                                   "The container must have sufficient back spare capacity");
 			XSTD_RECORD_OLD_VALUE(old_size, size());
 			XSTD_CONTRACT_POSTCONDITION(size() == old_size + n, "The container size attribute must grow by n");
 
-			// ConstructionTransaction is an RAII wrapper used for book-keeping. If
+			// RAII wrapper that provides basic exception guarantee when constructing value n times.
 			ConstructionTransaction txn(this, end(), n);
 			for (; txn.pos_ != txn.end_; ++txn.pos_) {
 				auto [... member_ptrs] = pointers_;
-				auto [... member_values] = value;
-				(std::allocator_traits<Allocator>::construct(alloc_, std::to_address(member_ptrs), member_values), ...);
+				auto& [... member_values] = value;
+				// RAII guard that provides that offers strong exception safety, when constructing a single
+				// T element, in the member declaration order.
+				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(member_values..., member_ptrs..., alloc_);
 			}
+		}
+
+		/**
+		 * @brief Default constructor.
+		 */
+		constexpr soa_split_buffer() = default;
+
+		constexpr soa_split_buffer(size_type start, size_type capacity) {
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(capacity > 0, "The capacity must be greater than 0");
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity, "Cannot have a start point outside the capacity");
+
 		}
 	};
 } // namespace xstd::detail
