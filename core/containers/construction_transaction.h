@@ -6,8 +6,8 @@
 #include <memory>
 #include <ranges>
 #include <tuple>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace xstd::detail {
 	template <typename T, typename Allocator> struct soa_split_buffer;
@@ -23,7 +23,7 @@ namespace xstd::detail {
 	 * @tparam Alloc
 	 * @tparam Iterator
 	 */
-template <typename T, typename Alloc, typename Iterator> struct ConstructionTransaction {
+	template <typename T, typename Alloc, typename Iterator> struct ConstructionTransaction {
 		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Iterator pos, Iterator end);
 
 		ConstructionTransaction(soa_split_buffer<T, Alloc> *parent, Iterator pos, std::size_t n);
@@ -61,18 +61,18 @@ template <typename T, typename Alloc, typename Iterator> struct ConstructionTran
 	 * @tparam Args Member types of T
 	 */
 	template <typename Allocator, typename... Args> struct SOAVecElementConstructionTransaction {
-		std::tuple<Args&&...> args_{};
+		std::tuple<Args &&...> args_{};
 		std::tuple<Args *...> ptrs_{};
 		size_t num_elements_constructed{0};
 		[[no_unique_address]] Allocator allocator_;
 
-		template<typename... MemberTypes>
-		requires (std::is_same_v<Args, std::remove_cvref_t<MemberTypes>> && ...)
-		SOAVecElementConstructionTransaction(const MemberTypes&... args, MemberTypes *...ptrs, Allocator allocator)
+		template <typename... MemberTypes>
+		requires(std::is_same_v<Args, std::remove_cvref_t<MemberTypes>> && ...)
+		SOAVecElementConstructionTransaction(const MemberTypes &...args, MemberTypes *...ptrs, Allocator allocator)
 		    : args_{std::forward_as_tuple(args...)}, ptrs_{ptrs...}, allocator_{allocator} {}
 
 		constexpr void destroy() {
-			return [&]<size_t... Indices>(std::index_sequence<Indices...>){
+			return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
 				(((Indices < num_elements_constructed) ? (std::destroy_at(std::get<Indices>(ptrs_)), 0) : 0), ...);
 			}(std::make_index_sequence<sizeof...(Args)>{});
 		}
@@ -90,7 +90,7 @@ template <typename T, typename Alloc, typename Iterator> struct ConstructionTran
 
 		constexpr void construct() {
 			template for (constexpr int I : std::views::iota(sizeof...(Args))) {
-				construct_impl(std::get<I>(std::forward<Args>(args_)), std::get<I>(ptrs_));
+				construct_impl(std::forward(std::get<I>(args_)), std::get<I>(ptrs_));
 			}
 		};
 	};
