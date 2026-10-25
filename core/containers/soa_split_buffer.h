@@ -257,6 +257,29 @@ namespace xstd::detail {
 		}
 
 		/**
+		 * @brief Determine the size in bytes for an allocation request for the container to have
+		 * enough space for being able to hold requested_capacity elements of type T in the future.
+		 * @param requested_capacity The requested spare capacity.
+		 * @return The number of bytes of raw memory storage required.
+		 */
+		constexpr size_t required_bytes(size_t requested_capacity) {
+			size_t required_bytes = 0;
+#if __cpp_impl_reflection
+			static constexpr int num_members = members.size();
+			template for (constexpr int I : std::views::iota(0, num_members)) {
+				size_t align_requirement = std::meta::alignment_of(type_of(members[I]));
+				if constexpr (I > 0) {
+					size_t padding = bytes_required & (align_requirement - 1);
+					padding = padding ? align_requirement - padding : 0;
+					bytes_required += padding;
+				}
+				bytes_required += size_of(type_of(members[I])) * requested_capacity;
+			}
+#endif
+			return required_bytes;
+		}
+
+		/**
 		 * @brief Default constructor.
 		 */
 		constexpr soa_split_buffer() = default;
