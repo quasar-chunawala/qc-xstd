@@ -293,8 +293,6 @@ namespace xstd::detail {
 			return align_at_boundary;
 		}
 
-		constexpr std::byte *allocate(size_t capacity) {}
-
 		/**
 		 * @brief Default constructor.
 		 */
