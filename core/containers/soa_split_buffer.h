@@ -33,7 +33,7 @@ namespace xstd::detail {
 	 *
 	 */
 
-	template <typename T, typename Allocator> struct soa_split_buffer {
+	template <typename T, typename Allocator = std::allocator<T>> struct soa_split_buffer {
 		using value_type = T;
 		using size_type = std::size_t;
 		using reference = T &;
@@ -71,11 +71,6 @@ namespace xstd::detail {
 			References *operator->() { return this; }
 		};
 #endif
-		Pointers pointers_{};
-		std::size_t begin_offset_{0};
-		std::size_t size_{0};
-		std::size_t capacity_{0};
-		[[no_unique_address]] Allocator alloc_;
 
 		/**
 		 * @brief StorageBlock type is used by the allocate_memory functions as a unit memory allocation.
@@ -83,6 +78,13 @@ namespace xstd::detail {
 		struct alignas(T) StorageBlock {
 			std::byte byte_array[alignof(T)];
 		};
+
+		Pointers pointers_{};
+		StorageBlock *raw_memory_{};
+		std::size_t begin_offset_{0};
+		std::size_t size_{0};
+		std::size_t capacity_{0};
+		[[no_unique_address]] Allocator alloc_;
 
 #if __cpp_impl_reflection
 		using tuple_pointers_t = [:std::meta::substitute(^^std::tuple, ptr_members |
@@ -237,6 +239,21 @@ namespace xstd::detail {
 			size_ = new_size;
 		}
 
+		constexpr void set_begin_capacity(std::byte *raw_mem, size_type capacity) {
+#if __cpp_impl_reflection
+			static constexpr int num_members = members.size();
+			// size_t allocation_offset{raw_mem & (alignof(T) - 1)};
+			size_t allocation_offset{0};
+			template for (constexpr auto ptr_member : ptr_members) {
+				auto r = substitute(^^calculate_allocation_offset, remove_pointer(type_of(ptr_member)));
+				allocation_offset += calculate_allocation_offset<([:remove_pointer(std::meta::type_of(ptr_member)):])>(
+				    allocation_offset);
+				pointers_.[:ptr_member:] = raw_mem + allocation_offset;
+				allocation_offset += size_of(remove_pointer(type_of(ptr_member))) * capacity;
+			}
+#endif
+		}
+
 		/**
 		 * @brief Copy constructs n objects starting at end().
 		 *
@@ -321,7 +338,7 @@ namespace xstd::detail {
 		 * @endverbatim
 		 * @return
 		 */
-		template <typename MemberType> constexpr size_t calculation_allocation_offset(size_t offset) {
+		template <typename MemberType> constexpr size_t calculate_allocation_offset(size_t offset) {
 			return (offset + alignof(MemberType) - 1) & (~alignof(MemberType) + 1);
 		}
 
@@ -342,8 +359,21 @@ namespace xstd::detail {
 
 			byte_allocator_type byte_allocator(alloc_);
 			size_t num_blocks = (nbytes + alignment - 1) / alignment;
-			StorageBlock *raw_memory = traits::allocate(byte_allocator, num_blocks);
-			return static_cast<std::byte *>(raw_memory);
+			raw_memory_ = traits::allocate(byte_allocator, num_blocks);
+			return static_cast<std::byte *>(raw_memory_);
+		}
+
+		constexpr void deallocate_memory() {
+			static constexpr size_t alignment = alignof(T);
+			size_t nbytes = calculate_allocation_size(capacity_);
+
+			// Rebind the allocator
+			using traits = typename std::allocator_traits<Allocator>::template rebind_traits<StorageBlock>;
+			using byte_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<StorageBlock>;
+			byte_allocator_type byte_allocator(alloc_);
+			size_t num_blocks = (nbytes + alignment - 1) / alignment;
+
+			traits::deallocate(byte_allocator, raw_memory_, num_blocks);
 		}
 
 		/**
@@ -351,11 +381,17 @@ namespace xstd::detail {
 		 */
 		constexpr soa_split_buffer() = default;
 
-		constexpr soa_split_buffer(size_type begin_offset, size_type capacity) {
+		/**
+		 * @brief Constructor that accepts a capacity and begin_offset.
+		 *
+		 */
+		constexpr soa_split_buffer(size_type capacity, size_type begin_offset) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(capacity > 0, "The capacity must be greater than 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity,
 			                                   "Cannot have a start point outside the capacity");
 			std::byte *raw_memory = allocate_memory(capacity);
+			set_begin_capacity(raw_memory, capacity);
+			set_valid_range(begin_offset, 0);
 		}
 	};
 } // namespace xstd::detail
