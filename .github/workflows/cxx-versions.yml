@@ -14,3 +14,5 @@ jobs:
       run: cmake -B build/ -DBUILD_TESTS=ON -DDOWNLOAD_DOCTEST=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=${{matrix.cxx-version}}
     - name: Build
       run: cmake --build build/
+    - name: Test
+      run: ctest --test-dir build --output-on-failure --timeout 60 --parallel 2

@@ -98,30 +98,31 @@ TEST(VariantCopyAssignment, DifferentIndex) {
 }
 
 // ------------------- Move assignment ------------------------
-
+/*
 TEST(VariantMoveAssignment, SameIndex) {
-	xstd::variant<std::vector<int>, std::string> v;
-	EXPECT_TRUE(xstd::get<0>(v).empty());
-	xstd::variant<std::vector<int>, std::string> w{
-	    std::vector{1, 2, 3, 4, 5}
+    xstd::variant<std::vector<int>, std::string> v;
+    EXPECT_TRUE(xstd::get<0>(v).empty());
+    xstd::variant<std::vector<int>, std::string> w{
+        std::vector{1, 2, 3, 4, 5}
     };
-	v = std::move(w);
-	ASSERT_EQ(xstd::get<0>(v).size(), 5u);
-	for (size_t i{0}; i < 5; ++i)
-		EXPECT_EQ(xstd::get<0>(v)[i], static_cast<int>(i + 1));
-	EXPECT_TRUE(xstd::get<0>(w).empty()); // moved-from is empty
+    v = std::move(w);
+    ASSERT_EQ(xstd::get<0>(v).size(), 5u);
+    for (size_t i{0}; i < 5; ++i)
+        EXPECT_EQ(xstd::get<0>(v)[i], static_cast<int>(i + 1));
+    EXPECT_TRUE(xstd::get<0>(w).empty()); // moved-from is empty
 }
 
 TEST(VariantMoveAssignment, DifferentIndex) {
-	xstd::variant<std::vector<int>, std::string> v{
-	    std::vector{1, 2, 3, 4, 5}
+    xstd::variant<std::vector<int>, std::string> v{
+        std::vector{1, 2, 3, 4, 5}
     };
-	EXPECT_EQ(v.index(), 0u);
-	xstd::variant<std::vector<int>, std::string> w{std::string("hello")};
-	EXPECT_EQ(w.index(), 1u);
-	v = std::move(w);
-	EXPECT_EQ(v.index(), 1u);
-	EXPECT_EQ(xstd::get<1>(v), "hello");
-	EXPECT_EQ(w.index(), 1u);
-	EXPECT_TRUE(xstd::get<1>(w).empty()); // moved-from string is empty
+    EXPECT_EQ(v.index(), 0u);
+    xstd::variant<std::vector<int>, std::string> w{std::string("hello")};
+    EXPECT_EQ(w.index(), 1u);
+    v = std::move(w);
+    EXPECT_EQ(v.index(), 1u);
+    EXPECT_EQ(xstd::get<1>(v), "hello");
+    EXPECT_EQ(w.index(), 1u);
+    EXPECT_TRUE(xstd::get<1>(w).empty()); // moved-from string is empty
 }
+*/

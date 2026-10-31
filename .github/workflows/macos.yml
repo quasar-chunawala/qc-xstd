@@ -25,5 +25,7 @@ jobs:
         - name: Build
           run: |
             cmake --build build --verbose
+        - name: Test
+          run: ctest --test-dir build --output-on-failure --timeout 60 --parallel 2            
             
 
