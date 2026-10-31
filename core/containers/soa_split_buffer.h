@@ -252,19 +252,22 @@ namespace xstd::detail {
 			size_ = new_size;
 		}
 
+		/**
+		 * @brief Sets the split_buffer's raw_memory_ byte pointer to the starting address of the allocated memory.
+		 * The split_buffer's contigous storage is divided into sub-arrays, one each for T's member values.
+		 * pointers_ field is initialized to the base addresses of each of the sub-arrays.
+		 *
+		 * @param raw_mem Starting address of the allocated memory on the heap.
+		 * @param capacity
+		 */
 		constexpr void set_begin_capacity(std::byte *raw_mem, size_type capacity) {
+			raw_memory_ = reinterpret_cast<StorageBlock *>(raw_mem);
 #if __cpp_impl_reflection
-			static constexpr int num_members = members.size();
-			// size_t allocation_offset{raw_mem & (alignof(T) - 1)};
-			size_t allocation_offset{0};
-
+			const auto member_offsets = calculate_member_offsets<T>(capacity);
+			std::size_t i = 0;
 			template for (constexpr auto ptr_member : ptr_members) {
-				constexpr auto reflected_func = substitute(^^soa_split_buffer::calculate_allocation_offset,
-				                                           {
-				                                               remove_pointer(type_of(ptr_member))});
-				allocation_offset += [:reflected_func:](allocation_offset);
-				pointers_.[:ptr_member:] = reinterpret_cast<[:type_of(ptr_member):]>(raw_mem + allocation_offset);
-				allocation_offset += size_of(remove_pointer(type_of(ptr_member))) * capacity;
+				pointers_.[:ptr_member:] = reinterpret_cast<[:type_of(ptr_member):]>(raw_mem +
+				                                                                     member_offsets[i++].offset);
 			}
 #endif
 			capacity_ = capacity;
@@ -310,76 +313,15 @@ namespace xstd::detail {
 		constexpr void clear() { destruct_at_end(begin()); }
 
 		/**
-		 * @brief Determine the size in bytes for an allocation request for the container to have
-		 * enough space for being able to hold requested_capacity elements of type T in the future.
-		 * @param requested_capacity The requested spare capacity.
-		 * @return The number of bytes of raw memory storage required.
-		 */
-		constexpr size_t calculate_allocation_size(size_t requested_capacity) {
-			size_t required_bytes = 0;
-#if __cpp_impl_reflection
-			static constexpr int num_members = members.size();
-			template for (constexpr int I : std::views::iota(0, num_members)) {
-				size_t align_requirement = std::meta::alignment_of(type_of(members[I]));
-				if constexpr (I > 0) {
-					size_t padding = required_bytes & (align_requirement - 1);
-					padding = padding ? align_requirement - padding : 0;
-					required_bytes += padding;
-				}
-				required_bytes += size_of(type_of(members[I])) * requested_capacity;
-			}
-#endif
-			return required_bytes;
-		}
-
-		/**
-		 * @brief Determine the offset in bytes for the array of values of type MemberType
-		 * in the soa_split_buffer.
-		 * @tparam MemberType
-		 * @param offset
-		 * @details In general x & (~x) isolates the lowest set bit of x.
-		 * @verbatim
-		 * If x is a power of 2, for example, let x := 0b0000 1000 (2^3), then :
-		 *
-		 *		   (x - 1)  -->  0b0000 0111
-		 *
-		 *  Example 1. v := 5.
-		 *     v + (x - 1)  -->  0b0000 1100
-		 *		 & (~x + 1) -->  0b1111 1000
-		 * ---------------------------------
-		 *                       0b0000 1000
-		 *
-		 *  Example 2. v := 8.
-		 *     v + (x - 1)  -->  0b0000 1111
-		 *		 & (~x + 1) -->  0b1111 1000
-		 * ---------------------------------
-		 *                       0b0000 1000
-		 *
-		 *  Example 3. v := 9.
-		 *     v + (x - 1)  -->  0b0001 0000
-		 *		 & (~x + 1) -->  0b1111 1000
-		 * ---------------------------------
-		 *                       0b0001 0000
-		 *
-		 * (v + (x - 1)) & (~x + 1) gives v rounded down to the nearest multiple
-		 * of x.
-		 * @endverbatim
-		 * @return
-		 */
-		template <typename MemberType> constexpr size_t calculate_allocation_offset(size_t offset) {
-			return (offset + alignof(MemberType) - 1) & (~alignof(MemberType) + 1);
-		}
-
-		/**
-		 * @brief Helper allocation function that calculates the allocation size and obtains
-		 *.memory on the heap large enough to hold capacity elements of type T in SoA fashion.
+		 * @brief Helper function that calculates the allocation size and obtains
+		 *.memory on the heap large enough to hold capacity elements of type T in SoA fashion,
+		 * and returns a handle to this block.
 		 *
 		 * @param capacity The user-requested capacity for the container.
-		 * @return constexpr std::byte* The memory address of the resultant allocation.
 		 */
 		constexpr std::byte *allocate_memory(size_t capacity) {
 			static constexpr size_t alignment = alignof(T);
-			size_t nbytes = calculate_allocation_size(capacity);
+			size_t nbytes = calculate_allocation_size<T>(capacity);
 
 			// Rebind the allocator
 			using traits = typename std::allocator_traits<Allocator>::template rebind_traits<StorageBlock>;
@@ -387,17 +329,17 @@ namespace xstd::detail {
 
 			byte_allocator_type byte_allocator(alloc_);
 			size_t num_blocks = (nbytes + alignment - 1) / alignment;
-			raw_memory_ = traits::allocate(byte_allocator, num_blocks);
+			StorageBlock *block_ptr = traits::allocate(byte_allocator, num_blocks);
 			// std::println("Allocated {} bytes from {} to {}",
 			//              num_blocks * sizeof(StorageBlock),
 			//              raw_memory_,
 			//              raw_memory_ + (num_blocks * sizeof(StorageBlock)));
-			return (std::byte *)(raw_memory_);
+			return reinterpret_cast<std::byte *>(block_ptr);
 		}
 
 		constexpr void deallocate_memory() {
 			static constexpr size_t alignment = alignof(T);
-			size_t nbytes = calculate_allocation_size(capacity_);
+			size_t nbytes = calculate_allocation_size<T>(capacity_);
 
 			// Rebind the allocator
 			using traits = typename std::allocator_traits<Allocator>::template rebind_traits<StorageBlock>;
@@ -425,8 +367,8 @@ namespace xstd::detail {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(capacity > 0, "The capacity must be greater than 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity,
 			                                   "Cannot have a start point outside the capacity");
-			std::byte *raw_memory = allocate_memory(capacity);
-			set_begin_capacity(raw_memory, capacity);
+			std::byte *raw_mem = allocate_memory(capacity);
+			set_begin_capacity(raw_mem, capacity);
 			set_valid_range(begin_offset, 0);
 		}
 
