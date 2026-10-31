@@ -1,8 +1,11 @@
 #ifndef SOA_SPLIT_BUFFER_H
 #define SOA_SPLIT_BUFFER_H
 
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <memory>
+#include <print>
 #include <ranges>
 #include <tuple>
 
@@ -80,7 +83,7 @@ namespace xstd::detail {
 		};
 
 		Pointers pointers_{};
-		StorageBlock *raw_memory_{};
+		StorageBlock *raw_memory_{nullptr};
 		std::size_t begin_offset_{0};
 		std::size_t size_{0};
 		std::size_t capacity_{0};
@@ -102,79 +105,89 @@ namespace xstd::detail {
 		using tuple_members_t = decltype(tuple_type_of<T>());
 #endif
 		struct iterator {
-			using value_type = tuple_members_t;
+			using iterator_category = std::contiguous_iterator_tag;
+			using iterator_type = Pointers;
+			using value_type = References;
+			using pointer = Pointers;
+			using difference_type = std::ptrdiff_t;
 
-			iterator operator++() {
+			constexpr iterator operator++() {
 				auto [... ptrs] = ptrs_;
-				return iterator((ptrs + 1)...);
+				return iterator(Pointers{(ptrs + 1)...});
 			}
 
-			iterator operator++(int) {
+			constexpr iterator operator++(int) {
 				iterator temp = *this;
 				++(*this);
 				return temp;
 			}
 
-			iterator operator--() {
+			constexpr iterator operator--() {
 				auto [... ptrs] = ptrs_;
-				return iterator(ptrs_ - 1);
+				return iterator(Pointers{(ptrs - 1)...});
 			}
 
-			iterator operator--(int) {
+			constexpr iterator operator--(int) {
 				iterator temp = *this;
 				--(*this);
 				return temp;
 			}
 
-			iterator operator+(std::ptrdiff_t n) {
+			constexpr iterator operator+(std::ptrdiff_t n) {
 				auto [... ptrs] = ptrs_;
-				return iterator((ptrs + n)...);
+				return iterator(Pointers{(ptrs + n)...});
 			}
 
-			iterator &operator+=(std::ptrdiff_t n) {
+			constexpr iterator &operator+=(std::ptrdiff_t n) {
 				auto [... ptrs] = ptrs_;
-				*this = iterator((ptrs + n)...);
+				*this = iterator(Pointers{(ptrs + n)...});
 				return *this;
 			}
 
-			iterator operator-(std::ptrdiff_t n) {
+			constexpr iterator operator-(std::ptrdiff_t n) {
 				auto [... ptrs] = ptrs_;
-				return iterator((ptrs - n)...);
+				// auto [... result_ptrs] = ((ptrs - n), ...);
+				return iterator(Pointers{(ptrs - n)...});
 			}
 
-			iterator &operator-=(std::ptrdiff_t n) {
+			constexpr iterator &operator-=(std::ptrdiff_t n) {
 				auto [... ptrs] = ptrs_;
-				*this = iterator((ptrs - n)...);
+				*this = iterator(Pointers{(ptrs - n)...});
 				return *this;
 			}
 
-			friend iterator operator+(std::ptrdiff_t n, const iterator &rhs) { return rhs + n; }
+			friend constexpr iterator operator+(std::ptrdiff_t n, const iterator &rhs) { return rhs + n; }
 
-			friend iterator operator-(std::ptrdiff_t n, const iterator &rhs) { return rhs - n; }
+			friend constexpr iterator operator-(std::ptrdiff_t n, const iterator &rhs) { return rhs - n; }
 
-			std::ptrdiff_t operator-(const iterator &rhs) {
-				auto [... ptrs1] = ptrs_;
-				auto [... ptrs2] = rhs.ptrs_;
-				auto result = std::tie((ptrs1 - ptrs2)...);
-				return std::get<0>(result);
+			constexpr std::ptrdiff_t operator-(const iterator &rhs) {
+				auto [lhs_first, ... ptrs1] = ptrs_;
+				auto [rhs_first, ... ptrs2] = rhs.ptrs_;
+				return lhs_first - rhs_first;
 			}
 
-			References operator*() {
+			constexpr References operator*() {
 				auto [... ptrs] = ptrs_;
 				return References((*ptrs)...);
 			}
 
-			References operator[](std::size_t idx) { return References(*(this + idx)); }
+			constexpr References operator[](std::size_t idx) { return References(*(this + idx)); }
 
-			References *operator->() {
+			constexpr References *operator->() {
 				auto [... ptrs] = ptrs_;
 				References ref = References((*ptrs)...);
 				return ref;
 			}
 
-			iterator operator=(iterator &rhs) {
+			constexpr iterator operator=(iterator &rhs) {
 				ptrs_ = rhs.ptrs_;
 				return *this;
+			}
+
+			constexpr bool operator==(iterator &rhs) {
+				auto [... lhs_ptrs] = ptrs_;
+				auto [... rhs_ptrs] = rhs.ptrs_;
+				return ((lhs_ptrs == rhs_ptrs) && ...);
 			}
 
 			Pointers ptrs_;
@@ -244,14 +257,17 @@ namespace xstd::detail {
 			static constexpr int num_members = members.size();
 			// size_t allocation_offset{raw_mem & (alignof(T) - 1)};
 			size_t allocation_offset{0};
+
 			template for (constexpr auto ptr_member : ptr_members) {
-				auto r = substitute(^^calculate_allocation_offset, remove_pointer(type_of(ptr_member)));
-				allocation_offset += calculate_allocation_offset<([:remove_pointer(std::meta::type_of(ptr_member)):])>(
-				    allocation_offset);
-				pointers_.[:ptr_member:] = raw_mem + allocation_offset;
+				constexpr auto reflected_func = substitute(^^soa_split_buffer::calculate_allocation_offset,
+				                                           {
+				                                               remove_pointer(type_of(ptr_member))});
+				allocation_offset += [:reflected_func:](allocation_offset);
+				pointers_.[:ptr_member:] = reinterpret_cast<[:type_of(ptr_member):]>(raw_mem + allocation_offset);
 				allocation_offset += size_of(remove_pointer(type_of(ptr_member))) * capacity;
 			}
 #endif
+			capacity_ = capacity;
 		}
 
 		/**
@@ -280,6 +296,18 @@ namespace xstd::detail {
 				    member_values..., member_ptrs..., alloc_);
 			}
 		}
+
+		constexpr void destruct_at_end(iterator new_last) {
+			auto iter = end();
+			while (iter != new_last) {
+				--iter;
+				auto [... ptrs] = iter.ptrs_;
+				(std::destroy_at(ptrs), ...);
+			}
+			size_ = (new_last - begin());
+		}
+
+		constexpr void clear() { destruct_at_end(begin()); }
 
 		/**
 		 * @brief Determine the size in bytes for an allocation request for the container to have
@@ -360,7 +388,11 @@ namespace xstd::detail {
 			byte_allocator_type byte_allocator(alloc_);
 			size_t num_blocks = (nbytes + alignment - 1) / alignment;
 			raw_memory_ = traits::allocate(byte_allocator, num_blocks);
-			return static_cast<std::byte *>(raw_memory_);
+			// std::println("Allocated {} bytes from {} to {}",
+			//              num_blocks * sizeof(StorageBlock),
+			//              raw_memory_,
+			//              raw_memory_ + (num_blocks * sizeof(StorageBlock)));
+			return (std::byte *)(raw_memory_);
 		}
 
 		constexpr void deallocate_memory() {
@@ -374,6 +406,10 @@ namespace xstd::detail {
 			size_t num_blocks = (nbytes + alignment - 1) / alignment;
 
 			traits::deallocate(byte_allocator, raw_memory_, num_blocks);
+			// std::println("Deallocated {} bytes from {} to {}",
+			//              num_blocks * sizeof(StorageBlock),
+			//              raw_memory_,
+			//              raw_memory_ + (num_blocks * sizeof(StorageBlock)));
 		}
 
 		/**
@@ -392,6 +428,18 @@ namespace xstd::detail {
 			std::byte *raw_memory = allocate_memory(capacity);
 			set_begin_capacity(raw_memory, capacity);
 			set_valid_range(begin_offset, 0);
+		}
+
+		/**
+		 * @brief Destroy the split buffer object
+		 *
+		 */
+		constexpr ~soa_split_buffer() {
+			clear();
+			if (raw_memory_) {
+				deallocate_memory();
+				raw_memory_ = nullptr;
+			}
 		}
 	};
 } // namespace xstd::detail
