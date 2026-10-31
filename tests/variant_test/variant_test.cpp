@@ -98,6 +98,7 @@ TEST(VariantCopyAssignment, DifferentIndex) {
 }
 
 // ------------------- Move assignment ------------------------
+// TODO: Fix VariantMoveAssignment tests
 /*
 TEST(VariantMoveAssignment, SameIndex) {
     xstd::variant<std::vector<int>, std::string> v;
