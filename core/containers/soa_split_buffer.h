@@ -301,6 +301,7 @@ namespace xstd::detail {
 		}
 
 		constexpr void destruct_at_end(iterator new_last) {
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(new_last > begin(), "new_last must in [begin(),end())");
 			auto iter = end();
 			while (iter != new_last) {
 				--iter;

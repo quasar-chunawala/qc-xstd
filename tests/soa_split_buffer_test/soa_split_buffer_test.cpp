@@ -8,22 +8,6 @@ namespace {
 	template <std::size_t Size, std::size_t Align> struct alignas(Align) Blob {
 		std::byte bytes[Size];
 	};
-} // namespace
-TEST(SoaSplitBufferUtilsTest, MemberLayoutsOfVec3D) {
-	struct Vec3 {
-		double x_;
-		double y_;
-		double z_;
-	};
-
-	auto layouts = xstd::detail::member_layouts<Vec3>;
-	for (auto i{0}; i < 3; ++i) {
-		EXPECT_EQ(layouts[i].size, sizeof(double));
-		EXPECT_EQ(layouts[i].alignment, alignof(double));
-	}
-}
-
-TEST(SoaSplitBufferUtilsTest, MemberOffsetsOfParticle) {
 
 	struct Vec3 {
 		double x_;
@@ -41,6 +25,24 @@ TEST(SoaSplitBufferUtilsTest, MemberOffsetsOfParticle) {
 		bool alive;
 	};
 
+	struct Mixed {
+		Blob<1, 1> a;
+		Blob<16, 16> b;
+		Blob<3, 1> c;
+		Blob<8, 8> d;
+		Blob<2, 2> e;
+		Blob<4, 4> f;
+	};
+} // namespace
+TEST(SoaSplitBufferUtilsTest, MemberLayoutsOfVec3D) {
+	auto layouts = xstd::detail::member_layouts<Vec3>;
+	for (auto i{0}; i < 3; ++i) {
+		EXPECT_EQ(layouts[i].size, sizeof(double));
+		EXPECT_EQ(layouts[i].alignment, alignof(double));
+	}
+}
+
+TEST(SoaSplitBufferUtilsTest, MemberOffsetsOfParticle) {
 	auto layouts = xstd::detail::member_layouts<Particle>;
 	EXPECT_EQ(layouts[0].size, sizeof(double) * 3);
 	EXPECT_EQ(layouts[1].size, sizeof(double) * 3);
@@ -61,55 +63,45 @@ TEST(SoaSplitBufferUtilsTest, MemberOffsetsOfParticle) {
 }
 
 TEST(SoaSplitBufferUtilsTest, MemberOffsetsOfMixed) {
-
-	struct Mixed {
-		Blob<1, 1> a;
-		Blob<16, 16> b;
-		Blob<3, 1> c;
-		Blob<8, 8> d;
-		Blob<2, 2> e;
-		Blob<4, 4> f;
-	};
-
-	// Capacity 100:
-	//   a     0 ..  100  -> pad 12 to reach 112 (b is 16-aligned)
-	//   b   112 .. 1712
-	//   c  1712 .. 2012  -> pad 4 to reach 2016 (d is 8-aligned)
-	//   d  2016 .. 2816
-	//   e  2816 .. 3016
-	//   f  3016 .. 3416
-	auto member_offsets = xstd::detail::calculate_member_offsets<Mixed>(100);
+	// Capacity 7:
+	//   a    0 ..   7  -> pad 9 to reach 16 (b is 16-aligned)
+	//   b   16 .. 128
+	//   c  128 .. 149  -> pad 3 to reach 152 (d is 8-aligned)
+	//   d  152 .. 208
+	//   e  208 .. 222  -> pad 2 to reach 224 (f is 4-aligned)
+	//   f  224 .. 252
+	auto member_offsets = xstd::detail::calculate_member_offsets<Mixed>(7);
 	EXPECT_EQ(member_offsets[0].alignment, 1);
 	EXPECT_EQ(member_offsets[0].size, 1);
 	EXPECT_EQ(member_offsets[0].offset, 0);
-	EXPECT_EQ(member_offsets[0].trailing_padding_bytes, 12);
+	EXPECT_EQ(member_offsets[0].trailing_padding_bytes, 9);
 
 	EXPECT_EQ(member_offsets[1].alignment, 16);
 	EXPECT_EQ(member_offsets[1].size, 16);
-	EXPECT_EQ(member_offsets[1].offset, 112);
+	EXPECT_EQ(member_offsets[1].offset, 16);
 	EXPECT_EQ(member_offsets[1].trailing_padding_bytes, 0);
 
 	EXPECT_EQ(member_offsets[2].alignment, 1);
 	EXPECT_EQ(member_offsets[2].size, 3);
-	EXPECT_EQ(member_offsets[2].offset, 1712);
-	EXPECT_EQ(member_offsets[2].trailing_padding_bytes, 4);
+	EXPECT_EQ(member_offsets[2].offset, 128);
+	EXPECT_EQ(member_offsets[2].trailing_padding_bytes, 3);
 
 	EXPECT_EQ(member_offsets[3].alignment, 8);
 	EXPECT_EQ(member_offsets[3].size, 8);
-	EXPECT_EQ(member_offsets[3].offset, 2016);
+	EXPECT_EQ(member_offsets[3].offset, 152);
 	EXPECT_EQ(member_offsets[3].trailing_padding_bytes, 0);
 
 	EXPECT_EQ(member_offsets[4].alignment, 2);
 	EXPECT_EQ(member_offsets[4].size, 2);
-	EXPECT_EQ(member_offsets[4].offset, 2816);
-	EXPECT_EQ(member_offsets[4].trailing_padding_bytes, 0);
+	EXPECT_EQ(member_offsets[4].offset, 208);
+	EXPECT_EQ(member_offsets[4].trailing_padding_bytes, 2);
 
 	EXPECT_EQ(member_offsets[5].alignment, 4);
 	EXPECT_EQ(member_offsets[5].size, 4);
-	EXPECT_EQ(member_offsets[5].offset, 3016);
+	EXPECT_EQ(member_offsets[5].offset, 224);
 	EXPECT_EQ(member_offsets[5].trailing_padding_bytes, 0);
 
-	EXPECT_EQ(xstd::detail::calculate_allocation_size<Mixed>(100), 3416);
+	EXPECT_EQ(xstd::detail::calculate_allocation_size<Mixed>(7), 252);
 }
 
 TEST(SoaSplitBufferTest, DefaultConstructor) {
@@ -123,12 +115,7 @@ TEST(SoaSplitBufferTest, DefaultConstructor) {
 }
 
 TEST(SoaSplitBufferTest, CapacityAndBeginOffsetConstructor) {
-	struct Vec3D {
-		double x_;
-		double y_;
-		double z_;
-	};
-	xstd::detail::soa_split_buffer<Vec3D> split_buffer(1000, 250);
+	xstd::detail::soa_split_buffer<Vec3> split_buffer(1000, 250);
 	EXPECT_EQ(split_buffer.size(), 0);
 	EXPECT_EQ(split_buffer.capacity(), 1000);
 }
