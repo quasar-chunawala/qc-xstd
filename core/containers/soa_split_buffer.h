@@ -340,6 +340,19 @@ namespace xstd::detail {
 			set_size(size() + std::distance(first, last));
 		}
 
+		/**
+		 * @brief Copy constructs the elements from a data-stream, until a sentinel value last
+		 *        is encountered.
+		 *
+		 * @details This method accepts an input_iterator and a sentinel. This is common for example, when
+		 *          when reading from a file or network socket. So, we do not know ahead of time
+		 *          how many elements need to be read. As a result, in each iteration, we first check
+		 *          for sufficient back_spare() capacity. If there is no room at the back, we perform a reallocation.
+		 * @tparam InputIterator An iterator that satisfies std::input_iterator concept.
+		 * @tparam Sentinel
+		 * @param first
+		 * @param last
+		 */
 		template <std::input_iterator InputIterator, typename Sentinel>
 		constexpr void construct_at_end_with_sentinel(InputIterator first, Sentinel last) {
 
@@ -379,6 +392,12 @@ namespace xstd::detail {
 			}
 		}
 
+		/**
+		 * @brief Swap the lhs with rhs, member-wise.
+		 *
+		 * @param lhs
+		 * @param rhs
+		 */
 		friend void swap(soa_split_buffer &lhs, soa_split_buffer &rhs) noexcept {
 			using std::swap;
 			swap(lhs.raw_memory_, rhs.raw_memory_);
