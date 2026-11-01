@@ -52,11 +52,11 @@ namespace xstd::detail {
 			auto data_members = std::define_static_array(get_all_fields(^^T));
 			define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 				                             return data_member_spec(add_pointer(type_of(member)),
-				                                                     {.name = identifier_of(member)});
+											                         {.name = identifier_of(member)});
 			                             }));
 			define_aggregate(^^ReferencesBase, data_members | std::views::transform([](std::meta::info member) {
 				                                   return data_member_spec(add_lvalue_reference(type_of(member)),
-				                                                           {.name = identifier_of(member)});
+												                           {.name = identifier_of(member)});
 			                                   }));
 		}
 
@@ -219,11 +219,15 @@ namespace xstd::detail {
 
 		[[nodiscard]] constexpr std::size_t size() const { return size_; }
 
+		constexpr void set_size(size_t new_size) { size_ = new_size; }
+
 		[[nodiscard]] constexpr bool empty() const { return size_ == 0; }
 
 		[[nodiscard]] constexpr std::size_t capacity() const { return capacity_; }
 
 		[[nodiscard]] constexpr std::size_t front_spare() const { return begin_offset_; }
+
+		constexpr void set_front_spare(size_t new_begin_offset) { begin_offset_ = new_begin_offset; }
 
 		[[nodiscard]] constexpr std::size_t back_spare() const { return capacity_ - front_spare() - size_; }
 
@@ -241,7 +245,13 @@ namespace xstd::detail {
 
 		constexpr void set_sentinel(size_type size) { size_ = size; }
 
-		constexpr void set_sentinel(iterator new_end) { end() = new_end; }
+		constexpr void set_sentinel(iterator new_end) {
+			auto [begin_ptr, ... begin_ptrs] = begin().ptrs_;
+			auto [end_ptr, ... end_ptrs] = new_end.ptrs_;
+			set_size(end_ptr - begin_ptr + 1);
+		}
+
+		constexpr void set_capacity(size_type new_capacity) { capacity_ = new_capacity; }
 
 		[[nodiscard]] constexpr std::size_t get_data() const { return begin_offset_; }
 
@@ -260,7 +270,7 @@ namespace xstd::detail {
 		 * @param raw_mem Starting address of the allocated memory on the heap.
 		 * @param capacity
 		 */
-		constexpr void set_begin_capacity(std::byte *raw_mem, size_type capacity) {
+		constexpr void set_pointers(std::byte *raw_mem, size_type capacity) {
 			raw_memory_ = reinterpret_cast<StorageBlock *>(raw_mem);
 #if __cpp_impl_reflection
 			const auto member_offsets = calculate_member_offsets<T>(capacity);
@@ -270,7 +280,7 @@ namespace xstd::detail {
 				                                                                     member_offsets[i++].offset);
 			}
 #endif
-			capacity_ = capacity;
+			set_capacity(capacity);
 		}
 
 		/**
@@ -281,7 +291,7 @@ namespace xstd::detail {
 		 * @post size() = old_size + n
 		 * @post [i] == value for all i in [size() - n, size())
 		 */
-		constexpr void copy_construct_at_end(size_type n, const_reference value) {
+		constexpr void copy_construct_at_end_with_size(size_type n, const_reference value) {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(n > 0, "The number of objects to construct n, must satisfy n > 0");
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + n <= capacity(),
 			                                   "The container must have sufficient back spare capacity");
@@ -291,24 +301,110 @@ namespace xstd::detail {
 			// RAII wrapper that provides basic exception guarantee when constructing value n times.
 			ConstructionTransaction txn(this, end(), n);
 			for (; txn.pos_ != txn.end_; ++txn.pos_) {
-				auto [... member_ptrs] = pointers_;
+				auto [... member_ptrs] = txn.pos_.ptrs_;
 				auto &[... member_values] = value;
 				// RAII guard that provides that offers strong exception safety, when constructing a single
 				// T element, in the member declaration order.
 				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
 				    member_values..., member_ptrs..., alloc_);
 			}
+			set_size(size() + n);
 		}
 
-		constexpr void destruct_at_end(iterator new_last) {
-			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(new_last > begin(), "new_last must in [begin(),end())");
+		/**
+		 * @brief Copy constructs the range [first,last) at the end.
+		 *
+		 * @details This method accepts a pair of forward iterators. Hence, we know the number of elements
+		 *          in the range, and we expect the caller to ensure that there is enough room in the soa_split_buffer.
+		 * @tparam ForwardIterator
+		 * @param first The start of the range.
+		 * @param last One past the end of the range.
+		 */
+		template <std::forward_iterator ForwardIterator>
+		constexpr void copy_construct_at_end_with_size(ForwardIterator first, ForwardIterator last) {
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(last > first,
+			                                   "The number of objects to construct n, must satisfy n > 0");
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(size() + std::distance(first, last),
+			                                   "The container must have sufficient back spare capacity");
+			// RAII wrapper that provides basic exception guarantee when constructing n elements.
+			ConstructionTransaction txn(this, end(), std::distance(first, last));
+			auto src_iter{first};
+			for (; txn.pos_ != txn.end_; ++txn.pos_) {
+				auto [... member_ptrs] = txn.pos_.ptrs_;
+				auto &[... member_values] = *src_iter;
+				// RAII guard that provides that offers strong exception safety, when constructing a single
+				// T element, in the member declaration order.
+				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
+				    member_values..., member_ptrs..., alloc_);
+			}
+			set_size(size() + std::distance(first, last));
+		}
+
+		template <std::input_iterator InputIterator, typename Sentinel>
+		constexpr void construct_at_end_with_sentinel(InputIterator first, Sentinel last) {
+
+			while (first != last) {
+				if (!back_spare()) {
+					// We ran out of back spare while reading the input stream.
+					size_t old_capacity = capacity();
+					size_t new_capacity = std::max({2 * old_capacity, 8ul});
+					soa_split_buffer new_buf(new_capacity, 0);
+
+					auto dest_iter = new_buf.begin();
+					auto src_iter = begin();
+					// If the relocation throws mid-way, it guarantees that
+					// new_buf will be in a valid state. If an exception is thrown in the below for-loop block, if we
+					// exit the scope prematurely, new_buf will automatically clear its elements upon destruction.
+					size_t new_buf_size{0};
+					for (; src_iter != end(); ++src_iter, ++dest_iter) {
+						auto [... member_ptrs] = dest_iter.ptrs_;
+						auto &[... member_values] = *src_iter;
+						// RAII guard that provides that offers strong exception safety, when constructing a single
+						// T element, in the member declaration order.
+						SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
+						    std::move(member_values)..., member_ptrs..., alloc_);
+
+						new_buf.set_sentinel(++new_buf_size);
+					}
+					swap(*this, new_buf);
+				}
+				auto [... member_ptrs] = end().ptrs_;
+				auto &[... member_values] = *first;
+				// RAII guard that provides that offers strong exception safety, when constructing a single
+				// T element, in the member declaration order.
+				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
+				    member_values..., member_ptrs..., alloc_);
+				set_sentinel(++size_);
+				++first;
+			}
+		}
+
+		friend void swap(soa_split_buffer &lhs, soa_split_buffer &rhs) noexcept {
+			using std::swap;
+			swap(lhs.raw_memory_, rhs.raw_memory_);
+			swap(lhs.pointers_, rhs.pointers_);
+			swap(lhs.begin_offset_, rhs.begin_offset_);
+			swap(lhs.size_, rhs.size_);
+			swap(lhs.capacity_, rhs.capacity_);
+		}
+
+		/**
+		 * @brief Destructs objects at new_end and onwards.
+		 *
+		 * @param new_end
+		 */
+		constexpr void destruct_at_end(iterator new_end) {
+			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(new_end >= begin() && new_end < end(),
+			                                   "new_last must in [begin(),end())");
+			XSTD_CONTRACT_POSTCONDITION(size_ == new_end - begin(),
+			                            "The container size attribute must be updated to end() - begin()");
 			auto iter = end();
-			while (iter != new_last) {
+			while (iter != new_end) {
 				--iter;
 				auto [... ptrs] = iter.ptrs_;
 				(std::destroy_at(ptrs), ...);
 			}
-			size_ = (new_last - begin());
+			size_ = (new_end - begin());
 		}
 
 		constexpr void clear() { destruct_at_end(begin()); }
@@ -369,7 +465,7 @@ namespace xstd::detail {
 			XSTD_ASSERT_ARGUMENT_WITHIN_DOMAIN(start >= 0 && start < capacity,
 			                                   "Cannot have a start point outside the capacity");
 			std::byte *raw_mem = allocate_memory(capacity);
-			set_begin_capacity(raw_mem, capacity);
+			set_pointers(raw_mem, capacity);
 			set_valid_range(begin_offset, 0);
 		}
 
