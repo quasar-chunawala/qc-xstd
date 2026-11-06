@@ -110,6 +110,14 @@ namespace xstd::detail {
 				}
 				return isEqual;
 			}
+
+			bool operator==(References other) const{
+				bool isEqual{true};
+				template for (constexpr size_t I : std::views::iota(0ul, members.size())) {
+					isEqual &= (this->[:ref_members[I]:] == other.[:ref_members[I]:]);
+				}
+				return isEqual;								
+			}
 		};
 #endif
 

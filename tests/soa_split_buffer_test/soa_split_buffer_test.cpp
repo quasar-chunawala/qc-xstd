@@ -129,4 +129,9 @@ TEST(SoaSplitBufferTest, ConstructAtEndWithSizeTest) {
 	buf.copy_construct_at_end_with_size(1, i_hat);
 	EXPECT_EQ(buf.size(), 1);
 	EXPECT_EQ(buf[0], i_hat);
+
+	Vec3 j_hat{.x_ = 0.0, .y_ = 1.0, .z_ = 0.0};
+	buf.copy_construct_at_end_with_size(1, j_hat);
+	EXPECT_EQ(buf.size(), 2);
+	EXPECT_EQ(buf[1], j_hat);
 }
