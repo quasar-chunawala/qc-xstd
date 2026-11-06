@@ -119,3 +119,14 @@ TEST(SoaSplitBufferTest, CapacityAndBeginOffsetConstructor) {
 	EXPECT_EQ(split_buffer.size(), 0);
 	EXPECT_EQ(split_buffer.capacity(), 1000);
 }
+
+TEST(SoaSplitBufferTest, ConstructAtEndWithSizeTest) {
+	xstd::detail::soa_split_buffer<Vec3> buf(1000, 250);
+	EXPECT_EQ(buf.size(), 0);
+	EXPECT_EQ(buf.capacity(), 1000);
+
+	Vec3 i_hat{.x_ = 1.0, .y_ = 0.0, .z_ = 0.0};
+	buf.copy_construct_at_end_with_size(1, i_hat);
+	EXPECT_EQ(buf.size(), 1);
+	EXPECT_EQ(buf[0], i_hat);
+}

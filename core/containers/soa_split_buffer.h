@@ -8,12 +8,23 @@
 #include <print>
 #include <ranges>
 #include <tuple>
+#include <type_traits>
 
 #include <core/containers/construction_transaction.h>
 #include <core/containers/soa_utils.h>
 #include <core/utilities/contract_assert.h>
 
 namespace xstd::detail {
+	template <typename Iterator> struct is_move_iterator {
+		using type = std::false_type;
+	};
+
+	template <typename Iterator> struct is_move_iterator<std::move_iterator<Iterator>> {
+		using type = std::true_type;
+	};
+
+	template <typename Iterator> using is_move_iterator_t = is_move_iterator<Iterator>::type;
+
 	/**
 	 * @brief An internal storage for the soa_vector.
 	 *
@@ -47,31 +58,58 @@ namespace xstd::detail {
 		struct ReferencesBase;
 		struct References;
 
+		/*
+		struct References : ReferencesBase {
+		    References &operator=(const T &value);
+		    References *operator->();
+		    bool operator==(const T &value) const;
+		};
+		*/
+
 #if __cpp_impl_reflection
 		consteval {
 			auto data_members = std::define_static_array(get_all_fields(^^T));
 			define_aggregate(^^Pointers, data_members | std::views::transform([](std::meta::info member) {
 				                             return data_member_spec(add_pointer(type_of(member)),
-											                         {.name = identifier_of(member)});
+				                                                     {.name = identifier_of(member)});
 			                             }));
 			define_aggregate(^^ReferencesBase, data_members | std::views::transform([](std::meta::info member) {
 				                                   return data_member_spec(add_lvalue_reference(type_of(member)),
-												                           {.name = identifier_of(member)});
+				                                                           {.name = identifier_of(member)});
 			                                   }));
 		}
 
 		static constexpr auto ptr_members = define_static_array(get_all_fields(^^Pointers));
 		static constexpr auto members = define_static_array(get_all_fields(^^T));
+		static constexpr auto ref_members = define_static_array(get_all_fields(^^ReferencesBase));
 
 		struct References : ReferencesBase {
-			References &operator=(const T &v) {
-				template for (constexpr auto member : members) {
-					[:identifier_of(member):] = v.[:identifier_of(member):];
+
+			template <typename... Args> References(Args &...args) : ReferencesBase{args...} {}
+
+			References &operator=(const T &value) {
+				template for (constexpr size_t I : std::views::iota(0ul, members.size())) {
+					this->[:ref_members[I]:] = value.[:members[I]:];
 				}
 				return *this;
 			}
 
 			References *operator->() { return this; }
+
+			/**
+			 * @brief Comparison operator
+			 *
+			 * @param value
+			 * @return true
+			 * @return false
+			 */
+			bool operator==(const T &value) const {
+				bool isEqual{true};
+				template for (constexpr size_t I : std::views::iota(0ul, members.size())) {
+					isEqual &= (this->[:ref_members[I]:] == value.[:members[I]:]);
+				}
+				return isEqual;
+			}
 		};
 #endif
 
@@ -113,7 +151,8 @@ namespace xstd::detail {
 
 			constexpr iterator operator++() {
 				auto [... ptrs] = ptrs_;
-				return iterator(Pointers{(ptrs + 1)...});
+				ptrs_ = Pointers{(ptrs + 1)...};
+				return *this;
 			}
 
 			constexpr iterator operator++(int) {
@@ -124,7 +163,8 @@ namespace xstd::detail {
 
 			constexpr iterator operator--() {
 				auto [... ptrs] = ptrs_;
-				return iterator(Pointers{(ptrs - 1)...});
+				ptrs_ = Pointers{(ptrs - 1)...};
+				return *this;
 			}
 
 			constexpr iterator operator--(int) {
@@ -168,10 +208,10 @@ namespace xstd::detail {
 
 			constexpr References operator*() {
 				auto [... ptrs] = ptrs_;
-				return References((*ptrs)...);
+				return References{(*ptrs)...};
 			}
 
-			constexpr References operator[](std::size_t idx) { return References(*(this + idx)); }
+			constexpr References operator[](std::size_t idx) { return References{*(this + idx)}; }
 
 			constexpr References *operator->() {
 				auto [... ptrs] = ptrs_;
@@ -184,7 +224,7 @@ namespace xstd::detail {
 				return *this;
 			}
 
-			constexpr bool operator==(iterator &rhs) {
+			constexpr bool operator==(const iterator &rhs) const {
 				auto [... lhs_ptrs] = ptrs_;
 				auto [... rhs_ptrs] = rhs.ptrs_;
 				return ((lhs_ptrs == rhs_ptrs) && ...);
@@ -248,7 +288,7 @@ namespace xstd::detail {
 		constexpr void set_sentinel(iterator new_end) {
 			auto [begin_ptr, ... begin_ptrs] = begin().ptrs_;
 			auto [end_ptr, ... end_ptrs] = new_end.ptrs_;
-			set_size(end_ptr - begin_ptr + 1);
+			set_size(end_ptr - begin_ptr);
 		}
 
 		constexpr void set_capacity(size_type new_capacity) { capacity_ = new_capacity; }
@@ -260,6 +300,14 @@ namespace xstd::detail {
 		constexpr void set_valid_range(size_type new_begin_offset, size_type new_size) {
 			begin_offset_ = new_begin_offset;
 			size_ = new_size;
+		}
+
+		constexpr void set_valid_range(iterator first, iterator last) {
+			auto [begin_cap_ptr, ... begin_cap_ptrs] = pointers_;
+			auto [first_ptr, ... first_ptrs] = first.ptrs_;
+			auto [last_ptr, ... last_ptrs] = last.ptrs_;
+			begin_offset_ = std::distance(begin_cap_ptr, first_ptr);
+			size_ = std::distance(first_ptr, last_ptr);
 		}
 
 		/**
@@ -283,6 +331,54 @@ namespace xstd::detail {
 			set_capacity(capacity);
 		}
 
+		template <typename... MemberTypes>
+		constexpr void construct_at_helper(auto tuple_ptrs, MemberTypes &&...member_values) {
+			SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
+			    tuple_ptrs, alloc_, std::forward<MemberTypes>(member_values)...);
+			elementTxn.construct();
+		}
+
+		/**
+		 * @brief Copy constructs the element *src_iter at dest_iter.
+		 *        Selected when *src_iter is not an rvalue reference.
+		 */
+		template <typename SourceIterator>
+		constexpr void construct_at_unchecked(iterator dest_iter, SourceIterator src_iter) {
+			auto [... member_ptrs] = dest_iter.ptrs_;
+			auto &[... member_values] = *src_iter;
+			// RAII guard that provides that offers strong exception safety, when constructing a single
+			// T element, in the member declaration order.
+			construct_at_helper(std::tuple(member_ptrs...), member_values...);
+		}
+
+		/**
+		 * @brief Move constructs the element *src_iter at dest_iter.
+		 *        Selected when *src_iter is an rvalue reference, e.g. for std::move_iterator.
+		 */
+		template <typename SourceIterator>
+		requires std::is_same_v<is_move_iterator_t<SourceIterator>, std::true_type>
+		constexpr void construct_at_unchecked(iterator dest_iter, SourceIterator src_iter) {
+			auto [... member_ptrs] = dest_iter.ptrs_;
+			// *src_iter is an xvalue, so we need auto&& here: auto& cannot bind to it.
+			auto &&[... member_values] = *src_iter;
+			// Structured bindings are lvalues even when bound to an rvalue, so each member must be
+			// explicitly moved.
+			construct_at_helper(std::tuple(member_ptrs...), std::move(member_values)...);
+		}
+
+		constexpr void copy_construct_at_unchecked(iterator dest_iter, const_reference src_value) {
+			auto [... member_ptrs] = dest_iter.ptrs_;
+			auto &[... member_values] = src_value;
+			// RAII guard that provides that offers strong exception safety, when constructing a single
+			// T element, in the member declaration order.
+			construct_at_helper(std::tuple(member_ptrs...), member_values...);
+		}
+
+		template <typename... Args> constexpr void emplace_at_unchecked(iterator dest_iter, Args &&...args) {
+			auto [... member_ptrs] = dest_iter.ptrs_;
+			construct_at_helper(std::tuple(member_ptrs...), std::forward<Args>(args)...);
+		}
+
 		/**
 		 * @brief Copy constructs n objects starting at end().
 		 *
@@ -301,14 +397,9 @@ namespace xstd::detail {
 			// RAII wrapper that provides basic exception guarantee when constructing value n times.
 			ConstructionTransaction txn(this, end(), n);
 			for (; txn.pos_ != txn.end_; ++txn.pos_) {
-				auto [... member_ptrs] = txn.pos_.ptrs_;
-				auto &[... member_values] = value;
-				// RAII guard that provides that offers strong exception safety, when constructing a single
-				// T element, in the member declaration order.
-				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
-				    member_values..., member_ptrs..., alloc_);
+				copy_construct_at_unchecked(txn.pos_, value);
 			}
-			set_size(size() + n);
+			set_size(size_ + n);
 		}
 
 		/**
@@ -329,15 +420,10 @@ namespace xstd::detail {
 			// RAII wrapper that provides basic exception guarantee when constructing n elements.
 			ConstructionTransaction txn(this, end(), std::distance(first, last));
 			auto src_iter{first};
-			for (; txn.pos_ != txn.end_; ++txn.pos_) {
-				auto [... member_ptrs] = txn.pos_.ptrs_;
-				auto &[... member_values] = *src_iter;
-				// RAII guard that provides that offers strong exception safety, when constructing a single
-				// T element, in the member declaration order.
-				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
-				    member_values..., member_ptrs..., alloc_);
+			for (; txn.pos_ != txn.end_; ++txn.pos_, ++src_iter) {
+				construct_at_unchecked(txn.pos_, src_iter);
 			}
-			set_size(size() + std::distance(first, last));
+			set_size(size_ + std::distance(first, last));
 		}
 
 		/**
@@ -370,26 +456,45 @@ namespace xstd::detail {
 					// exit the scope prematurely, new_buf will automatically clear its elements upon destruction.
 					size_t new_buf_size{0};
 					for (; src_iter != end(); ++src_iter, ++dest_iter) {
-						auto [... member_ptrs] = dest_iter.ptrs_;
-						auto &[... member_values] = *src_iter;
-						// RAII guard that provides that offers strong exception safety, when constructing a single
-						// T element, in the member declaration order.
-						SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
-						    std::move(member_values)..., member_ptrs..., alloc_);
-
+						construct_at_unchecked(dest_iter, std::move_iterator<InputIterator>(src_iter));
 						new_buf.set_sentinel(++new_buf_size);
 					}
 					swap(*this, new_buf);
 				}
-				auto [... member_ptrs] = end().ptrs_;
-				auto &[... member_values] = *first;
-				// RAII guard that provides that offers strong exception safety, when constructing a single
-				// T element, in the member declaration order.
-				SOAVecElementConstructionTransaction<Allocator, decltype(member_values)...> elementTxn(
-				    member_values..., member_ptrs..., alloc_);
-				set_sentinel(++size_);
+				copy_construct_at_unchecked(end(), first);
+				set_sentinel(size_ + 1);
 				++first;
 			}
+		}
+
+		template <typename... Args> void emplace_back(Args &&...args) {
+			if (back_spare() == 0) {
+				if (front_spare() > 0) {
+					size_t diff = front_spare();
+					diff = (diff + 1) / 2;
+					for (iterator it{begin()}; it != end(); ++it) {
+						construct_at_unchecked(it - diff, std::move_iterator(it));
+					}
+					set_valid_range(begin() - diff, end() - diff);
+				} else {
+					size_t old_capacity = capacity();
+					size_t new_capacity = std::max({2 * old_capacity, 8ul});
+					soa_split_buffer new_buf(new_capacity, new_capacity / 4);
+					auto dest_iter = new_buf.begin();
+					auto src_iter = begin();
+					// If the relocation throws mid-way, it guarantees that
+					// new_buf will be in a valid state. If an exception is thrown in the below for-loop block, if we
+					// exit the scope prematurely, new_buf will automatically clear its elements upon destruction.
+					size_t new_buf_size{0};
+					for (; src_iter != end(); ++src_iter, ++dest_iter) {
+						construct_at_unchecked(dest_iter, std::move_iterator(src_iter));
+						new_buf.set_sentinel(++new_buf_size);
+					}
+					swap(*this, new_buf);
+				}
+			}
+			emplace_at_unchecked(end(), std::forward<Args>(args)...);
+			set_sentinel(size_ + 1);
 		}
 
 		/**
@@ -469,6 +574,8 @@ namespace xstd::detail {
 			//              raw_memory_,
 			//              raw_memory_ + (num_blocks * sizeof(StorageBlock)));
 		}
+
+		constexpr References operator[](size_t idx) { return *(begin() + idx); }
 
 		/**
 		 * @brief Default constructor.

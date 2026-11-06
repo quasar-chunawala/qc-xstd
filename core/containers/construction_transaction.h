@@ -61,15 +61,15 @@ namespace xstd::detail {
 	 * @tparam Args Member types of T
 	 */
 	template <typename Allocator, typename... Args> struct SOAVecElementConstructionTransaction {
-		std::tuple<Args &&...> args_{};
-		std::tuple<Args *...> ptrs_{};
+		std::tuple<Args...> args_{};
+		std::tuple<std::remove_cvref_t<Args> *...> ptrs_{};
 		size_t num_elements_constructed{0};
 		[[no_unique_address]] Allocator allocator_;
 
-		template <typename... MemberTypes>
-		requires(std::is_same_v<Args, std::remove_cvref_t<MemberTypes>> && ...)
-		SOAVecElementConstructionTransaction(const MemberTypes &...args, MemberTypes *...ptrs, Allocator allocator)
-		    : args_{std::forward_as_tuple(args...)}, ptrs_{ptrs...}, allocator_{allocator} {}
+		template <typename... ConstructorArgs>
+		SOAVecElementConstructionTransaction(std::tuple<std::remove_cvref_t<ConstructorArgs> *...> ptrs,
+		                                     const Allocator &allocator, ConstructorArgs &&...args)
+		    : args_{std::forward_as_tuple(args...)}, ptrs_{ptrs}, allocator_{allocator} {}
 
 		constexpr void destroy() {
 			return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
@@ -77,20 +77,20 @@ namespace xstd::detail {
 			}(std::make_index_sequence<sizeof...(Args)>{});
 		}
 
-		template <typename Arg> constexpr void construct_impl(Arg &&arg, Arg *ptr) {
+		template <typename Arg> constexpr void construct_impl(Arg &&arg, std::remove_cvref_t<Arg> *ptr) {
 			std::construct_at(ptr, std::forward<Arg>(arg));
 			++num_elements_constructed;
 		}
 
 		~SOAVecElementConstructionTransaction() {
-			if (num_elements_constructed) {
+			if (num_elements_constructed < sizeof...(Args)) {
 				destroy();
 			}
 		}
 
 		constexpr void construct() {
-			template for (constexpr int I : std::views::iota(sizeof...(Args))) {
-				construct_impl(std::forward(std::get<I>(args_)), std::get<I>(ptrs_));
+			template for (constexpr int I : std::views::iota(0ul, sizeof...(Args))) {
+				construct_impl(std::get<I>(args_), std::get<I>(ptrs_));
 			}
 		};
 	};
